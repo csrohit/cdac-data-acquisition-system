@@ -18,7 +18,7 @@
 /* queue to store up to 10 messages (aligned to 4-byte boundary) */
 K_MSGQ_DEFINE(uart_msgq, MSG_SIZE, 10, 4);
 
-static const struct device *uart_dev = DEVICE_DT_GET(UART_DEVICE_NODE);
+struct device *uart_dev;
 
 /* receive buffer used in UART ISR callback */
 static char rx_buf[MSG_SIZE];
@@ -71,6 +71,8 @@ void print_uart(char *buf)
 void main(void)
 {
 	char tx_buf[MSG_SIZE];
+
+	uart_dev =  DEVICE_DT_GET(UART_DEVICE_NODE);
 
 	if (!device_is_ready(uart_dev)) {
 		printk("UART device not found!");
