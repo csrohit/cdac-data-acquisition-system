@@ -11,7 +11,7 @@
 #include <string.h>
 
 /* change this to any other UART peripheral if desired */
-#define UART_DEVICE_NODE DT_CHOSEN(zephyr_shell_uart)
+#define UART_DEVICE_NODE DEVICE_DT_GET(usart1)
 
 #define MSG_SIZE 32
 
