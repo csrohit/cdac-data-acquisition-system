@@ -1,0 +1,3 @@
+                                                     Data  acquisition system     
+
+A data acquisition system is a collection of software and hardware that allows one to measure or control physical characteristics of something in the real world.
