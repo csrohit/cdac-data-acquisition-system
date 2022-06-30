@@ -7,6 +7,7 @@
 #include <zephyr/zephyr.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/usb/usb_device.h>
 
 #include <string.h>
 
@@ -70,6 +71,7 @@ void print_uart(char *buf)
 
 void main(void)
 {
+
 	char tx_buf[MSG_SIZE];
 
 	uart_dev =  DEVICE_DT_GET(UART_DEVICE_NODE);
