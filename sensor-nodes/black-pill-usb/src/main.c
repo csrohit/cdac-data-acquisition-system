@@ -10,13 +10,16 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/zephyr.h>
 #include <zephyr/sys/ring_buffer.h>
-
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/logging/log.h>
 
 // register root level logger
 LOG_MODULE_REGISTER(usb_driver, CONFIG_LOG_DEFAULT_LEVEL);
 static const char c = ' ';
+#define LED DT_ALIAS(csled)
+static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED, gpios);
 
 #define RING_BUF_SIZE 1024
 uint8_t ring_buffer[RING_BUF_SIZE];
@@ -30,6 +33,7 @@ void ro_uart_irq_callback_user_data_t(const struct device *dev,
 
 static void interrupt_handler(const struct device *dev, void *user_data)
 {
+	int ret;
 	ARG_UNUSED(user_data);
 
 	while (uart_irq_update(dev) && uart_irq_is_pending(dev))
@@ -46,12 +50,29 @@ static void interrupt_handler(const struct device *dev, void *user_data)
 			{
 				recv_len = 0;
 			};
-			LOG_DBG("Received %d bytes", recv_len);	
-			if(buffer[0] == '1'){
+			LOG_DBG("Received %d bytes", recv_len);
+			if (buffer[0] == '1')
+			{
+				ret = gpio_pin_set_dt(&led, 1);
+				if (ret < 0)
+				{
+					LOG_ERR("COuld not set led to %d", 1);
+					return;
+				}
 				LOG_DBG("%#x -> Turning on led", buffer[0]);
-			}else if(buffer[0] == '0'){
+			}
+			else if (buffer[0] == '0')
+			{
+				ret = gpio_pin_set_dt(&led, 0);
+				if (ret < 0)
+				{
+					LOG_ERR("COuld not set led to %d", 0);
+					return;
+				}
 				LOG_DBG("%#x -> Turning off led", buffer[0]);
-			}else{
+			}
+			else
+			{
 				LOG_DBG("%#x -> Unknown command", buffer[0]);
 			}
 			buffer[1] = '\r';
@@ -103,7 +124,7 @@ void start_transmit(const struct device *dev)
 
 	while (1)
 	{
-		
+
 		ret = uart_fifo_fill(dev, msg, len);
 		if (ret < 0)
 		{
@@ -154,6 +175,34 @@ void main(void)
 	}
 
 	LOG_INF("DTR set");
+	start_transmit(dev);
+
+	if (!device_is_ready(led.port))
+	{
+		LOG_ERR("LED is not ready");
+		return 0;
+	}
+
+	ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
+	if (ret < 0)
+	{
+		LOG_ERR("Could not configure led as output");
+		return;
+	}
+
+	LOG_DBG("LED is set as output");
+
+	uint8_t count = 10;
+	while (count--)
+	{
+		ret = gpio_pin_toggle_dt(&led);
+		if (ret < 0)
+		{
+			return;
+		}
+
+		k_msleep(1000);
+	}
 
 	/* They are optional, we use them to test the interrupt endpoint */
 	ret = uart_line_ctrl_set(dev, UART_LINE_CTRL_DCD, 1);

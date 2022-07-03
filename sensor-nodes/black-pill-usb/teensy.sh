@@ -1,0 +1,1 @@
+arm-none-eabi-objcopy -O ihex --remove-section=.comment --remove-section=COMMON --remove-section=.eh_frame ./rohit/zephyr/zephyr.elf rohit.hex
