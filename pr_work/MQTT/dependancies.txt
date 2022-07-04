@@ -1,0 +1,5 @@
+install mqtt broker mosquitto
+	sudo apt install -y mosquitto
+	sudo apt-get install libmosquitto-dev
+
+install platform_io extension of VS_Code
