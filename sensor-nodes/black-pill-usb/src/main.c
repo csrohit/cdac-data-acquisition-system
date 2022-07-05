@@ -75,8 +75,8 @@ static void interrupt_handler(const struct device *dev, void *user_data)
 			{
 				LOG_DBG("%#x -> Unknown command", buffer[0]);
 			}
-			buffer[1] = '\r';
 			buffer[1] = '\n';
+			buffer[1] = '\r';
 
 			rb_len = ring_buf_put(&ringbuf, buffer, recv_len + 2);
 			if (rb_len < recv_len)
