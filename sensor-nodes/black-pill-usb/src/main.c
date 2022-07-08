@@ -19,7 +19,9 @@
 LOG_MODULE_REGISTER(usb_driver, CONFIG_LOG_DEFAULT_LEVEL);
 static const char c = ' ';
 #define LED DT_ALIAS(csled)
+#define LEDY DT_ALIAS(yellowled)
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED, gpios);
+static const struct gpio_dt_spec ledy = GPIO_DT_SPEC_GET(LEDY, gpios);
 
 #define RING_BUF_SIZE 1024
 uint8_t ring_buffer[RING_BUF_SIZE];
@@ -51,44 +53,59 @@ static void interrupt_handler(const struct device *dev, void *user_data)
 				recv_len = 0;
 			};
 			LOG_DBG("Received %d bytes", recv_len);
-			if (buffer[0] == '1')
-			{
-				ret = gpio_pin_set_dt(&led, 1);
-				if (ret < 0)
-				{
-					LOG_ERR("COuld not set led to %d", 1);
-					return;
-				}
-				LOG_DBG("%#x -> Turning on led", buffer[0]);
-			}
-			else if (buffer[0] == '0')
-			{
-				ret = gpio_pin_set_dt(&led, 0);
-				if (ret < 0)
-				{
-					LOG_ERR("COuld not set led to %d", 0);
-					return;
-				}
-				LOG_DBG("%#x -> Turning off led", buffer[0]);
-			}
-			else
-			{
-				LOG_DBG("%#x -> Unknown command", buffer[0]);
-			}
-			buffer[1] = '\n';
-			buffer[1] = '\r';
+			LOG_INF("First byte: %#x", buffer[0]);
+			LOG_INF("Second byte: %#x", buffer[1]);
+			LOG_INF("Third byte: %#x", buffer[2]);
 
-			rb_len = ring_buf_put(&ringbuf, buffer, recv_len + 2);
-			if (rb_len < recv_len)
+			if (buffer[1] == 0x01)
 			{
-				LOG_ERR("Drop %u bytes", recv_len - rb_len);
+				printk("blue\n");
+				gpio_pin_toggle_dt(&led);
+			}
+			else if (buffer[1] = 0x02)
+			{
+				printk("yellow\n");
+				gpio_pin_toggle_dt(&ledy);
 			}
 
-			LOG_DBG("tty fifo -> ringbuf %d bytes", rb_len);
-			if (rb_len)
-			{
-				uart_irq_tx_enable(dev);
-			}
+			// if (buffer[0] == '1')
+			// {
+			// 	ret = gpio_pin_set_dt(&led, 1);
+			// 	if (ret < 0)
+			// 	{
+			// 		LOG_ERR("COuld not set led to %d", 1);
+			// 		return;
+			// 	}
+			// 	LOG_DBG("%#x -> Turning on led", buffer[0]);
+			// }
+			// else if (buffer[0] == '0')
+			// {
+			// 	ret = gpio_pin_set_dt(&led, 0);
+			// 	if (ret < 0)
+			// 	{
+			// 		LOG_ERR("COuld not set led to %d", 0);
+			// 		return;
+			// 	}
+			// 	LOG_DBG("%#x -> Turning off led", buffer[0]);
+			// }
+			// else
+			// {
+			// 	LOG_DBG("%#x -> Unknown command", buffer[0]);
+			// }
+			// buffer[1] = '\n';
+			// buffer[1] = '\r';
+
+			// rb_len = ring_buf_put(&ringbuf, buffer, recv_len + 2);
+			// if (rb_len < recv_len)
+			// {
+			// 	LOG_ERR("Drop %u bytes", recv_len - rb_len);
+			// }
+
+			// LOG_DBG("tty fifo -> ringbuf %d bytes", rb_len);
+			// if (rb_len)
+			// {
+			// 	uart_irq_tx_enable(dev);
+			// }
 		}
 
 		if (uart_irq_tx_ready(dev))
@@ -158,28 +175,16 @@ void main(void)
 
 	ring_buf_init(&ringbuf, sizeof(ring_buffer), ring_buffer);
 
-	LOG_INF("Wait for DTR");
-
-	while (true)
-	{
-		uart_line_ctrl_get(dev, UART_LINE_CTRL_DTR, &dtr);
-		if (dtr)
-		{
-			break;
-		}
-		else
-		{
-			/* Give CPU resources to low priority threads. */
-			k_sleep(K_MSEC(100));
-		}
-	}
-
-	LOG_INF("DTR set");
-	start_transmit(dev);
+	// start_transmit(dev);
 
 	if (!device_is_ready(led.port))
 	{
 		LOG_ERR("LED is not ready");
+		return 0;
+	}
+	if (!device_is_ready(ledy.port))
+	{
+		LOG_ERR("YLED is not ready");
 		return 0;
 	}
 
@@ -189,33 +194,14 @@ void main(void)
 		LOG_ERR("Could not configure led as output");
 		return;
 	}
+	ret = gpio_pin_configure_dt(&ledy, GPIO_OUTPUT_ACTIVE);
+	if (ret < 0)
+	{
+		LOG_ERR("Could not configure led as output");
+		return;
+	}
 
 	LOG_DBG("LED is set as output");
-
-	uint8_t count = 10;
-	while (count--)
-	{
-		ret = gpio_pin_toggle_dt(&led);
-		if (ret < 0)
-		{
-			return;
-		}
-
-		k_msleep(1000);
-	}
-
-	/* They are optional, we use them to test the interrupt endpoint */
-	ret = uart_line_ctrl_set(dev, UART_LINE_CTRL_DCD, 1);
-	if (ret)
-	{
-		LOG_WRN("Failed to set DCD, ret code %d", ret);
-	}
-
-	ret = uart_line_ctrl_set(dev, UART_LINE_CTRL_DSR, 1);
-	if (ret)
-	{
-		LOG_WRN("Failed to set DSR, ret code %d", ret);
-	}
 
 	/* Wait 1 sec for the host to do all settings */
 	k_busy_wait(1000000);
@@ -236,6 +222,16 @@ void main(void)
 	uart_irq_rx_enable(dev);
 
 	// start_transmit(dev);
+
+	uint8_t count = 10;
+	gpio_pin_set_dt(&led, 1);
+	while (count--)
+	{
+		gpio_pin_toggle_dt(&led);
+		gpio_pin_toggle_dt(&ledy);
+		k_msleep(500);
+	}
+	
 }
 
 /**
