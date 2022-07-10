@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
                 int port = Integer.parseInt(portString);
                 Toast.makeText(getApplicationContext(), "Connecting to " + ipAddress + ":" + port, Toast.LENGTH_SHORT).show();
 
-                mStompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, "ws://192.168.1.226:8080/ws/websocket");
+                mStompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, "ws://"+ipAddress+":"+port+"/ws/websocket");
 
                 mStompClient.lifecycle().subscribe(lifecycleEvent -> {
                     switch (lifecycleEvent.getType()) {
