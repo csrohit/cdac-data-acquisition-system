@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/textView_led_blue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="112dp"
+        android:layout_marginEnd="200dp"
+        android:text="Blue Led"
+        app:layout_constraintEnd_toStartOf="@+id/switch_led_blue"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/textViewPort"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPort" />
+
+    <Switch
+        android:id="@+id/switch_led_yellow"
+        android:layout_width="57dp"
+        android:layout_height="48dp"
+        android:textOn="Blue led us on"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView_led_yellow"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/switch_led_blue"
+        tools:ignore="DuplicateSpeakableTextCheck" />
+
+    <TextView
+        android:id="@+id/textViewTemperatureValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:text="00.00"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textViewTemperatureLabel"
+        app:layout_constraintStart_toStartOf="@+id/switch_led_yellow" />
+
+    <Switch
+        android:id="@+id/switch_led_blue"
+        android:layout_width="58dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="28dp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textViewLedBlue"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/editTextNumber" />
+
+    <TextView
+        android:id="@+id/textViewTemperatureLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="44dp"
+        android:text="Temperature"
+        app:layout_constraintStart_toStartOf="@+id/textView_led_yellow"
+        app:layout_constraintTop_toBottomOf="@+id/textView_led_yellow" />
+
+    <TextView
+        android:id="@+id/textView_led_yellow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="68dp"
+        android:text="Yellow Led"
+        app:layout_constraintStart_toStartOf="@+id/textViewLedBlue"
+        app:layout_constraintTop_toBottomOf="@+id/textViewLedBlue" />
+
+    <TextView
+        android:id="@+id/TextViewIPAddress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="44dp"
+        android:text="IPAddress"
+        app:layout_constraintBaseline_toBaselineOf="@+id/editTextTextIPAddress"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textViewPort"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="35dp"
+        android:text="Port"
+        app:layout_constraintStart_toStartOf="@+id/TextViewIPAddress"
+        app:layout_constraintTop_toBottomOf="@+id/TextViewIPAddress" />
+
+    <EditText
+        android:id="@+id/editTextNumber"
+        android:layout_width="103dp"
+        android:layout_height="48dp"
+        android:layout_marginEnd="16dp"
+        android:ems="10"
+        android:inputType="number"
+        android:text="8080"
+        android:textSize="12sp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/textViewPort"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/editTextTextIPAddress"
+        tools:text="8080" />
+
+    <EditText
+        android:id="@+id/editTextTextIPAddress"
+        android:layout_width="154dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="44dp"
+        android:layout_marginEnd="16dp"
+        android:ems="10"
+        android:inputType="textUri"
+        android:text="192.168.0.208"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/buttonConnect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Connect"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textViewPort" />
+
+    <TextView
+        android:id="@+id/textViewLedBlue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="Blue Led"
+        app:layout_constraintStart_toStartOf="@+id/textViewPort"
+        app:layout_constraintTop_toBottomOf="@+id/buttonConnect" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
