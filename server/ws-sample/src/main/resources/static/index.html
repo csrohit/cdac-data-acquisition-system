@@ -39,7 +39,7 @@
                 var from = document.getElementById('from').value;
                 var text = document.getElementById('text').value;
                 stompClient.send("/app/news", {},
-                  JSON.stringify({'from':from, 'text':text + 'rohit is sending this message'}));
+                  JSON.stringify({'from':from, 'text':text }));
             }
             
             function showMessageOutput(messageOutput) {
@@ -47,7 +47,7 @@
                 var p = document.createElement('p');
                 p.style.wordWrap = 'break-word';
                 p.appendChild(document.createTextNode(messageOutput.from + ": " 
-                  + messageOutput.message + " (" + messageOutput.time + ")"));
+                  + messageOutput.text + " (" + messageOutput.time + ")"));
                 response.appendChild(p);
             }
         </script>

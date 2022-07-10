@@ -23,9 +23,6 @@ public class MainController {
         return message;
     }
 
-//    @MessageMapping("/news")
-//    public void broadcastNews(@Payload String message) {
-//        this.simpMessagingTemplate.convertAndSend("/topic/news", message);
-//    }
+
 
 }
