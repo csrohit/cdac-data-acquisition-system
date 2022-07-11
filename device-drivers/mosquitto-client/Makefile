@@ -2,9 +2,10 @@
 
 target:= subscriber
 CC:= gcc
+LDFLAGS:= -lmosquitto
 
 ${target}.o: ${target}.c
-	${CC} $^ -o $@
+	${CC} $^ -o $@ ${LDFLAGS}
 
 
 clean: 
@@ -12,3 +13,6 @@ clean:
 
 
 .phony: clean
+
+run: ${target}.o
+	./$^
