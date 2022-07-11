@@ -15,10 +15,10 @@ int main()
 {
     int fd = open("/dev/ttyACM0", O_RDWR), ret;
     frame_t f = {
-        .cmd = 0x34,
         .addr = 0x01,
+        .cmd = 0x34,
         .len = 0x02
-    }, r;
+    };
     if (fd < 0)
     {
         perror("open() failed");
