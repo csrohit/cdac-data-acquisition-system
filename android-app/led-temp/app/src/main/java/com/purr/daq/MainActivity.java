@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
                 });
                 mStompClient.connect();
                 Log.i(TAG, "Sending first message");
-                mStompClient.topic("/topic/news")
+                mStompClient.topic("/app/news")
                         .doOnError(t-> Log.e(TAG, "Subescribe failed", t)).subscribe(topicMessage -> {
                             Message message = mapper.readValue(topicMessage.getPayload(), Message.class);
 //                            Toast.makeText(getApplicationContext(), message.getFrom() + ": " + message.getText(), Toast.LENGTH_SHORT).show();
@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 try {
-                    mStompClient.send("/topic/news", mapper.writeValueAsString(m))
+                    mStompClient.send("/app/news", mapper.writeValueAsString(m))
                             .doOnError(t-> Log.e(TAG, "Connection failed", t)).subscribe();
                 } catch (JsonProcessingException e) {
                         e.printStackTrace();
