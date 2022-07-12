@@ -32,6 +32,7 @@ void on_message(struct mosquitto *, void *, const struct mosquitto_message *);
 void on_disconnect(struct mosquitto *, void *, int);
 void on_subscribe(struct mosquitto *, void *, int, int, const int *);
 void on_unsubscribe(struct mosquitto *, void *, int);
+void on_log(struct mosquitto *, void *, int, const char *);
 
 int main()
 {
@@ -93,8 +94,13 @@ int main()
     mosquitto_disconnect_callback_set(client, on_disconnect);
     mosquitto_subscribe_callback_set(client, on_subscribe);
     mosquitto_unsubscribe_callback_set(client, on_unsubscribe);
+    mosquitto_log_callback_set(client, on_log);
     mosquitto_loop_start(client);
-    mosquitto_loop_forever(client, 1000, 1);
+
+    while(1){
+        sleep(5);
+    }
+    // mosquitto_loop_forever(client, 1000, 1);
     printf("Stopped loop");
     CLEAN_CLIENT:
     // free memory associated with client
@@ -147,6 +153,7 @@ void on_message(struct mosquitto* mosq,void* obj,const struct mosquitto_message 
  * @param signal signal number
  */
 void termination_handler (int signal){
+    printf("Termination signal received\n");
 
     printf("Disconnecting client\n");
     mosquitto_disconnect(client);
@@ -154,10 +161,10 @@ void termination_handler (int signal){
     printf("Stopping loop\n");
     mosquitto_loop_stop(client, 0);
 
-    printf("Termination signal received\n");
     // free memory associated with client
     printf("Destroying client\n");
     mosquitto_destroy(client);
+
     // free resources associated with library
     printf("Unloading library\n");
     mosquitto_lib_cleanup();
@@ -180,4 +187,9 @@ void on_subscribe(struct mosquitto *mosq, void *obj, int mid, int qos_count, con
 
 void on_unsubscribe(struct mosquitto *mosq, void *obj, int mid){
     printf("Unsubscribed from topic %s, mid=%d\n", topic, mid);
+}
+
+
+void on_log(struct mosquitto *mosq, void *obj, int mid, const char *msg){
+    printf("(%d) LOG: %s\n", mid, msg);
 }
