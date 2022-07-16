@@ -13,10 +13,10 @@ typedef struct {
 
 int main()
 {
-    int fd = open("/dev/ttyACM0", O_RDWR), ret;
+    int fd = open("/dev/node0", O_RDWR), ret;
     frame_t f = {
         .addr = 0x01,
-        .cmd = 0x34,
+        .cmd = 0x35,
         .len = 0x02
     };
     if (fd < 0)

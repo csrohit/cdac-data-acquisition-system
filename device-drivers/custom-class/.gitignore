@@ -3,4 +3,4 @@
 *.order
 *.ko
 *.mod
-*.mod.cmd
+*.mod.c

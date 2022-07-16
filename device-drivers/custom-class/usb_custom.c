@@ -2,10 +2,14 @@
 #include <linux/kernel.h>
 #include <linux/usb.h>
 #include <linux/uaccess.h>
-
+#include <linux/slab.h>
+#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
+#define BULK_EP_OUT 0x01
+#define BULK_EP_IN 0x81
+uint8_t maxPacketSize = 0x40;
 /**
  * @brief Function to be called when usb device is attached to the system matching the id table elntry
- * 
+ *
  * @param intf pointer to matching usb interface
  * @param id usb device id
  * @return int 0 if success else negative error code
@@ -14,10 +18,15 @@ int ro_probe(struct usb_interface *intf, const struct usb_device_id *id);
 
 /**
  * @brief Function to be called when registered device is removed form the system
- * 
+ *
  * @param intf pointer to registered interface
  */
 void ro_disconnect(struct usb_interface *intf);
+
+ssize_t ro_read(struct file *, char __user *, size_t, loff_t *);
+ssize_t ro_write(struct file *, const char __user *, size_t, loff_t *);
+int ro_open(struct inode *, struct file *);
+int ro_release(struct inode *, struct file *);
 
 static struct usb_device_id ro_id_table[] =
     {
@@ -32,6 +41,15 @@ static struct usb_driver ro_driver = {
     .probe = ro_probe,
     .id_table = ro_id_table,
     .disconnect = ro_disconnect};
+
+static struct usb_device *ro_device;
+static struct usb_class_driver ro_class;
+static struct file_operations ro_fops = {
+    .owner = THIS_MODULE,
+    .open = ro_open,
+    .read = ro_read,
+    .write = ro_write,
+    .release = ro_release};
 
 /**
  * @brief Initialization function for module
@@ -48,7 +66,7 @@ static __init int ro_init(void)
     ret = usb_register(&ro_driver);
     if (ret < 0)
     {
-        printk(KERN_ERR "%s usb_register() failed for driver (%s). Error number %d\n",THIS_MODULE->name, ro_driver.name, ret);
+        printk(KERN_ERR "%s usb_register() failed for driver (%s). Error number %d\n", THIS_MODULE->name, ro_driver.name, ret);
         return -1;
     }
     printk(KERN_INFO " %s: Registered driver (%s) with USB subsystem\n", THIS_MODULE->name, ro_driver.name);
@@ -62,7 +80,7 @@ static __init int ro_init(void)
  */
 static __exit void ro_exit(void)
 {
-    printk(KERN_INFO"%s: exit module\n", THIS_MODULE->name);
+    printk(KERN_INFO "%s: exit module\n", THIS_MODULE->name);
     /* deregister this driver with the USB subsystem */
     usb_deregister(&ro_driver);
     printk(KERN_INFO "%s: Deregistered driver (%s) with USB subsystem\n", THIS_MODULE->name, ro_driver.name);
@@ -70,24 +88,98 @@ static __exit void ro_exit(void)
 
 int ro_probe(struct usb_interface *intf, const struct usb_device_id *id)
 {
-    // int i, ret;
-
+    int ret;
+    uint8_t i;
+    struct usb_host_endpoint *endpoint;
     struct usb_host_interface *active_config;
-    printk(KERN_INFO"%s: probe called\n", THIS_MODULE->name);
+    printk(KERN_INFO "%s: probe called\n", THIS_MODULE->name);
 
-    // current active interface 
+    // current active interface
     active_config = intf->cur_altsetting;
-    printk(KERN_INFO"%s: plugged device-> %04X:%04X \n", THIS_MODULE->name, id->idVendor,id->idProduct);
-    printk(KERN_INFO"%s: interface no.-> %04X \n", THIS_MODULE->name,active_config->desc.bInterfaceNumber);
-    printk(KERN_INFO"%s: total endpoints-> %04X\n", THIS_MODULE->name, active_config->desc.bNumEndpoints);
-    printk(KERN_INFO"%s: interface class-> %04X\n", THIS_MODULE->name, active_config->desc.bInterfaceClass);
-    printk(KERN_INFO"%s: exit module\n", THIS_MODULE->name);  
+    printk(KERN_INFO "%s: plugged device-> %04X:%04X \n", THIS_MODULE->name, id->idVendor, id->idProduct);
+    printk(KERN_INFO "%s: interface no.-> %04X \n", THIS_MODULE->name, active_config->desc.bInterfaceNumber);
+    printk(KERN_INFO "%s: total endpoints-> %04X\n", THIS_MODULE->name, active_config->desc.bNumEndpoints);
+    printk(KERN_INFO "%s: interface class-> %04X\n", THIS_MODULE->name, active_config->desc.bInterfaceClass);
+    printk(KERN_INFO "%s: exit module\n", THIS_MODULE->name);
+    for (i = 0; i < active_config->desc.bNumEndpoints; i++)
+    {
+        endpoint = (active_config->endpoint + i);
+        printk(KERN_INFO "%s: endpoint address-> %#04x\n", THIS_MODULE->name, endpoint->desc.bEndpointAddress);
+    }
+
+    ro_device = interface_to_usbdev(intf);
+    ro_class.name = "usb/node%d";
+    ro_class.fops = &ro_fops;
+    ret = usb_register_dev(intf, &ro_class);
+    if (ret < 0)
+    {
+        printk(KERN_ERR "%s usb_register_dev() failed to assign minor\n", THIS_MODULE->name);
+    }
+    else
+    {
+        printk(KERN_ERR "%s assigned minor number-> %d\n", THIS_MODULE->name, intf->minor);
+    }
     return 0;
 }
 
-void ro_disconnect(struct usb_interface *intf){
-    printk(KERN_INFO"%s: disconnect called\n", THIS_MODULE->name);
-    printk(KERN_INFO"%s: removed interface-> %#04X\n", THIS_MODULE->name,intf->cur_altsetting->desc.bInterfaceNumber);
+void ro_disconnect(struct usb_interface *intf)
+{
+    printk(KERN_INFO "%s: disconnect called\n", THIS_MODULE->name);
+    usb_deregister_dev(intf, &ro_class);
+    pr_info("Deregistered driver (%s) from usb subsystem\n", ro_class.name);
+    printk(KERN_INFO "%s: removed interface-> %#04X\n", THIS_MODULE->name, intf->cur_altsetting->desc.bInterfaceNumber);
+}
+
+ssize_t ro_read(struct file *p_file, char __user *p_buff, size_t max_len, loff_t *_offset)
+{
+    printk(KERN_INFO "%s: read called\n", THIS_MODULE->name);
+    return -1;
+}
+ssize_t ro_write(struct file *p_file, const char __user *p_buff, size_t len, loff_t *_offset)
+{
+    int pipe, bytes_to_write, nbytes, ret;
+    void *k_buff;
+    printk(KERN_INFO "%s: write called (%lu bytes)\n", THIS_MODULE->name, len);
+    
+    bytes_to_write = MIN(maxPacketSize, len);
+
+    k_buff = kmalloc(bytes_to_write, GFP_KERNEL);
+
+    if(IS_ERR(k_buff)){
+        printk(KERN_ERR"%s kmalloc() failed\n", THIS_MODULE->name);
+        return -ENOMEM;
+    }
+    printk(KERN_INFO "%s: allocated %u bytes for kernel data buffer\n", THIS_MODULE->name, bytes_to_write);
+    nbytes = bytes_to_write - copy_from_user(k_buff, p_buff, bytes_to_write);
+    if(nbytes == 0){
+        pr_err("%s no data to write\n", THIS_MODULE->name);
+        kfree(k_buff);
+        return -EFAULT;
+    }
+
+    // get bulk out pipe
+    pipe = usb_sndbulkpipe(ro_device, BULK_EP_OUT);
+
+    ret = usb_bulk_msg(ro_device, pipe, k_buff, bytes_to_write , &nbytes, 5000);
+    if (ret)
+    {
+    	printk(KERN_ERR "%s: Bulk message returned %d\n", THIS_MODULE->name, ret);
+        kfree(k_buff);
+    	return -EFAULT;
+    }
+    printk(KERN_INFO"%s: Wrote bytes: %d\n", THIS_MODULE->name, nbytes);
+    kfree(k_buff);
+    return nbytes;
+}
+int ro_open(struct inode *p_inode, struct file *p_file)
+{
+    printk(KERN_INFO "%s: open called\n", THIS_MODULE->name);
+    return 0;
+}
+int ro_release(struct inode *p_inode, struct file *p_file)
+{
+    printk(KERN_INFO "%s: release called\n", THIS_MODULE->name);
+    return 0;
 }
 
 module_init(ro_init);
