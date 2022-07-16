@@ -1,0 +1,29 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/lib/gcc/x86_64-linux-gnu/9/include",
+                "/lib/modules/5.13.0-51-generic/build/include",
+                "/lib/modules/5.13.0-51-generic/build/include/uapi",
+                "/lib/modules/5.13.0-51-generic/build/include/generated/uapi",
+                "/lib/modules/5.13.0-51-generic/build/arch/x86/include",
+                "/lib/modules/5.13.0-51-generic/build/arch/x86/include/uapi",
+                "/lib/modules/5.13.0-51-generic/build/arch/x86/include/generated",
+                "/lib/modules/5.13.0-51-generic/build/arch/x86/include/generated/uapi"
+    
+            ],
+            "defines": [
+                "KBUILD_MODNAME=\"gpio_ioctl\"",
+                "__GNUC__",
+                "__KERNEL__"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
