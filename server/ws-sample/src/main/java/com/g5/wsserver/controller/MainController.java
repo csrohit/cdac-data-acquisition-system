@@ -1,5 +1,7 @@
 package com.g5.wsserver.controller;
 
+import com.g5.wsserver.model.MqttUsbMessage;
+import com.g5.wsserver.model.WebsocketMessage;
 import com.g5.wsserver.service.MqttService;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,24 +27,50 @@ public class MainController {
         return "index.html";
     }
 
-    @MessageMapping("/news")
+    @MessageMapping("/usb")
     @SendTo("/topic/news")
-    public String broadcastNews(@Payload String message) {
+    public String broadcastNews(@Payload WebsocketMessage message) {
+//        try {
+            System.out.println("Serial: "+ message.getDeviceId());
+            System.out.println("Peripheral: "+ message.getPeripheralId());
+            System.out.println("Command: "+ message.getCommandId());
         try {
-            System.out.println("sending to mqtt" + message);
-            if(message.contains("on")){
-
-                mqttService.publish("led", "on", 1, false);
-            }else{
-
-                mqttService.publish("led", "off", 1, false);
-            }
-//            mqttService.subscribe("led");
+            MqttUsbMessage m = new MqttUsbMessage();
+            m.setCommand((byte) message.getCommandId());
+            m.setData("");
+            m.setSerial((byte) message.getDeviceId());
+            m.setPeripheralId((byte) message.getPeripheralId());
+            byte f[] = m.getBytes();
+            System.out.println("Length: " + f.length);
+            System.out.println("Serial: " + f[0]);
+            System.out.println("Peripheral: " + f[1]);
+            System.out.println("Command: " + f[2]);
+            mqttService.publish("usb/black-pill", m.getBytes(), 1, false);
 //            simpMessagingTemplate.convertAndSend("/topic/news", "Hello");
         } catch (MqttException e) {
             return e.getMessage();
         }
-        return message;
+
+
+//            System.out.println("sending to mqtt" + message);
+//            if(message.contains("on")){
+//
+//                mqttService.publish("led", "on", 1, false);
+//            }else{
+//
+//                mqttService.publish("led", "off", 1, false);
+//            }
+//            mqttService.subscribe("led");
+//            simpMessagingTemplate.convertAndSend("/topic/news", "Hello");
+//        } catch (MqttException e) {
+//            return e.getMessage();
+//        }
+        return "done";
+    }
+
+    @MessageMapping("/out/+")
+    public void outputValue(@Payload WebsocketMessage message){
+        System.out.println("message at /out/+");
     }
 
 

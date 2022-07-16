@@ -15,6 +15,7 @@ import android.widget.Toast;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.purr.daq.socket.MySocketListener;
+import com.purr.daq.socket.WebsocketMessage;
 
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -28,11 +29,16 @@ public class MainActivity extends AppCompatActivity {
     private Switch switchBlueLed = null, switchYellowLed = null;
     private StompClient mStompClient;
     private ObjectMapper mapper = null;
+    private WebsocketMessage websocketMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        websocketMessage = new WebsocketMessage();
+        websocketMessage.setCommandId(0);
+        websocketMessage.setData("");
+        websocketMessage.setDeviceId(0);
         mapper = new ObjectMapper();
         Button buttonConnect = findViewById(R.id.buttonConnect);
         EditText editTextIPAddress = findViewById(R.id.editTextTextIPAddress);
@@ -88,17 +94,17 @@ public class MainActivity extends AppCompatActivity {
         switchBlueLed.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                Message m = new Message("android", "Led is on");
+                websocketMessage.setPeripheralId(1);
                 if(isChecked){
-                    m.setText("Led is on");
+
                     Toast.makeText(getApplicationContext(), "Turning on Blue Led", Toast.LENGTH_SHORT).show();
                 }else{
-                    m.setText("Led is off");
+
                     Toast.makeText(getApplicationContext(), "Turning off Blue Led", Toast.LENGTH_SHORT).show();
                 }
 
                 try {
-                    mStompClient.send("/app/news", mapper.writeValueAsString(m))
+                    mStompClient.send("/app/usb", mapper.writeValueAsString(websocketMessage))
                             .doOnError(t-> Log.e(TAG, "Connection failed", t)).subscribe();
                 } catch (JsonProcessingException e) {
                         e.printStackTrace();
@@ -107,12 +113,20 @@ public class MainActivity extends AppCompatActivity {
         });
 
         switchYellowLed.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                websocketMessage.setPeripheralId(2);
                 if(isChecked){
                     Toast.makeText(getApplicationContext(), "Turning on Yellow Led", Toast.LENGTH_SHORT).show();
                 }else{
                     Toast.makeText(getApplicationContext(), "Turning off Yellow Led", Toast.LENGTH_SHORT).show();
+                }
+                try {
+                    mStompClient.send("/app/usb", mapper.writeValueAsString(websocketMessage))
+                            .doOnError(t-> Log.e(TAG, "Connection failed", t)).subscribe();
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
                 }
             }
         });

@@ -1,5 +1,6 @@
 package com.g5.wsserver.controller;
 
+import com.g5.wsserver.model.MqttUsbMessage;
 import com.g5.wsserver.service.MqttService;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +22,14 @@ public class MqttController {
     @GetMapping
     public String hello(){
         try {
-
-            mqttService.subscribe("led");
-            mqttService.publish("led", "off", 1, false);
-            simpMessagingTemplate.convertAndSend("/topic/news", "Hello");
+            MqttUsbMessage m = new MqttUsbMessage((byte) 0x01, (byte) 0x01, (byte) 0x01, "");
+            byte f[] = m.getBytes();
+            System.out.println("Length: " + f.length);
+            System.out.println("Serial: " + f[0]);
+            System.out.println("Peripheral: " + f[1]);
+            System.out.println("Command: " + f[2]);
+            mqttService.publish("usb/black-pill", m.getBytes(), 1, false);
+//            simpMessagingTemplate.convertAndSend("/topic/news", "Hello");
         } catch (MqttException e) {
             return e.getMessage();
         }

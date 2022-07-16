@@ -27,6 +27,13 @@ public class MqttService {
         mqttClient.publish(topic, message);
     }
 
+    public void publish(String topic, final byte[] payload, int qos, boolean retained) throws MqttException {
+        MqttMessage message = new MqttMessage();
+        message.setPayload(payload);
+        message.setQos(qos);
+        message.setRetained(false);
+        mqttClient.publish(topic, message);
+    }
 
     public void subscribe(String topic) throws MqttException {
         mqttClient.subscribeWithResponse(topic, (tpc, msg)-> {
