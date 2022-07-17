@@ -1,0 +1,49 @@
+15:09:04 **** Incremental Build of configuration Debug for project lm35 ****
+make -j4 all 
+arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F407xx -c -I../Core/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc -I../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../Drivers/CMSIS/Include -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "Core/Src/main.o"
+../Core/Src/main.c: In function 'main':
+../Core/Src/main.c:75:26: warning: pointer targets in initialization of 'uint8_t *' {aka 'unsigned char *'} from 'char *' differ in signedness [-Wpointer-sign]
+   75 |  uint8_t *Welcome_msg = {"Welcome to STMetatronics \r\n Temperature sensor interface \n"};
+      |                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+../Core/Src/main.c:75:26: note: (near initialization for 'Welcome_msg')
+../Core/Src/main.c:101:41: warning: implicit declaration of function 'strlen' [-Wimplicit-function-declaration]
+  101 | HAL_UART_Transmit(&huart2, Welcome_msg, strlen(Welcome_msg) ,40);
+      |                                         ^~~~~~
+../Core/Src/main.c:101:41: warning: incompatible implicit declaration of built-in function 'strlen'
+../Core/Src/main.c:22:1: note: include '<string.h>' or provide a declaration of 'strlen'
+   21 | #include "main.h"
+  +++ |+#include <string.h>
+   22 | 
+../Core/Src/main.c:101:48: warning: pointer targets in passing argument 1 of 'strlen' differ in signedness [-Wpointer-sign]
+  101 | HAL_UART_Transmit(&huart2, Welcome_msg, strlen(Welcome_msg) ,40);
+      |                                                ^~~~~~~~~~~
+      |                                                |
+      |                                                uint8_t * {aka unsigned char *}
+../Core/Src/main.c:101:48: note: expected 'const char *' but argument is of type 'uint8_t *' {aka 'unsigned char *'}
+../Core/Src/main.c: In function 'temp_conv':
+../Core/Src/main.c:281:29: warning: pointer targets in passing argument 2 of 'HAL_UART_Transmit' differ in signedness [-Wpointer-sign]
+  281 |  HAL_UART_Transmit(&huart2, "temp:", 6 ,10);
+      |                             ^~~~~~~
+      |                             |
+      |                             char *
+In file included from ../Core/Inc/stm32f4xx_hal_conf.h:407,
+                 from ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:29,
+                 from ../Core/Inc/main.h:30,
+                 from ../Core/Src/main.c:21:
+../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:722:79: note: expected 'const uint8_t *' {aka 'const unsigned char *'} but argument is of type 'char *'
+  722 | HAL_StatusTypeDef HAL_UART_Transmit(UART_HandleTypeDef *huart, const uint8_t *pData, uint16_t Size, uint32_t Timeout);
+      |                                                                ~~~~~~~~~~~~~~~^~~~~
+arm-none-eabi-gcc -o "lm35.elf" @"objects.list"   -mcpu=cortex-m4 -T"C:\Users\girish\Desktop\MCPI\lm35\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="lm35.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Finished building target: lm35.elf
+ 
+arm-none-eabi-size   lm35.elf 
+arm-none-eabi-objdump -h -S  lm35.elf  > "lm35.list"
+   text	   data	    bss	    dec	    hex	filename
+  12536	     20	   1708	  14264	   37b8	lm35.elf
+Finished building: default.size.stdout
+ 
+Finished building: lm35.list
+ 
+
+15:09:07 Build Finished. 0 errors, 5 warnings. (took 2s.404ms)
+
