@@ -147,7 +147,7 @@ void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_messag
         printf("Data: %s\n", (char *)(msg->payload + 3));
     }
 
-    int fd = open("/dev/ttyACM0", O_RDWR), ret;
+    int fd = open("/dev/node0", O_RDWR), ret;
     if (fd < 0)
     {
         perror("open() failed");
