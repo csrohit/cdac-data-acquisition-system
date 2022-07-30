@@ -3,24 +3,10 @@
 #include <linux/usb.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
-#define MIN(a, b) (((a) <= (b)) ? (a) : (b))
+#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
 #define BULK_EP_OUT 0x01
 #define BULK_EP_IN 0x81
 uint8_t maxPacketSize = 0x40;
-
-typedef struct struct_ro_device
-{
-    struct usb_device *udev;
-    struct usb_interface *interface;
-    unsigned char *bulk_in_buffer;
-    size_t bulk_in_size;
-    size_t bulk_in_filled;
-    size_t bulk_in_copied;
-    __u8 bulk_in_endpointAddr;
-    __u8 bulk_ou_endpointAddr;
-    struct kref kref;
-} ro_usb_dev_t;
-
 /**
  * @brief Function to be called when usb device is attached to the system matching the id table elntry
  *
@@ -114,7 +100,7 @@ int ro_probe(struct usb_interface *intf, const struct usb_device_id *id)
     printk(KERN_INFO "%s: interface no.-> %04X \n", THIS_MODULE->name, active_config->desc.bInterfaceNumber);
     printk(KERN_INFO "%s: total endpoints-> %04X\n", THIS_MODULE->name, active_config->desc.bNumEndpoints);
     printk(KERN_INFO "%s: interface class-> %04X\n", THIS_MODULE->name, active_config->desc.bInterfaceClass);
-    // printk(KERN_INFO "%s: exit module\n", THIS_MODULE->name);
+    // printk(KERN_INFO "%s: exit module\n", THIS_MODULE->name);    
     for (i = 0; i < active_config->desc.bNumEndpoints; i++)
     {
         endpoint = (active_config->endpoint + i);
@@ -144,14 +130,15 @@ void ro_disconnect(struct usb_interface *intf)
     printk(KERN_INFO "%s: removed interface-> %#04X\n", THIS_MODULE->name, intf->cur_altsetting->desc.bInterfaceNumber);
 }
 
+
 /**
  * @brief Callback function
- *
- * @param p_file
- * @param p_buff
- * @param max_len
- * @param _offset
- * @return ssize_t
+ * 
+ * @param p_file 
+ * @param p_buff 
+ * @param max_len 
+ * @param _offset 
+ * @return ssize_t 
  */
 ssize_t ro_read(struct file *p_file, char __user *p_buff, size_t max_len, loff_t *_offset)
 {
@@ -174,15 +161,14 @@ ssize_t ro_write(struct file *p_file, const char __user *p_buff, size_t len, lof
     void *k_buff;
 
     printk(KERN_INFO "%s: write called (%lu bytes)\n", THIS_MODULE->name, len);
-
+    
     bytes_to_write = MIN(maxPacketSize, len);
 
     // allocate kernel space buffer for holding data to be written
     k_buff = kmalloc(bytes_to_write, GFP_KERNEL);
-    if (IS_ERR(k_buff))
-    {
+    if(IS_ERR(k_buff)){
         // could not allocate buffer in kernel space
-        printk(KERN_ERR "%s kmalloc() failed\n", THIS_MODULE->name);
+        printk(KERN_ERR"%s kmalloc() failed\n", THIS_MODULE->name);
         return -ENOMEM;
     }
 
@@ -190,8 +176,7 @@ ssize_t ro_write(struct file *p_file, const char __user *p_buff, size_t len, lof
 
     // copy_from_user returens no. of bytes no copied
     nbytes = bytes_to_write - copy_from_user(k_buff, p_buff, bytes_to_write);
-    if (nbytes == 0)
-    {
+    if(nbytes == 0){
         pr_err("%s no data to write\n", THIS_MODULE->name);
         kfree(k_buff);
         return -EFAULT;
@@ -201,14 +186,14 @@ ssize_t ro_write(struct file *p_file, const char __user *p_buff, size_t len, lof
     pipe = usb_sndbulkpipe(ro_device, BULK_EP_OUT);
 
     // write data to usb device
-    ret = usb_bulk_msg(ro_device, pipe, k_buff, bytes_to_write, &nbytes, 5000);
+    ret = usb_bulk_msg(ro_device, pipe, k_buff, bytes_to_write , &nbytes, 5000);
     if (ret)
     {
-        printk(KERN_ERR "%s: Bulk message returned %d\n", THIS_MODULE->name, ret);
+    	printk(KERN_ERR "%s: Bulk message returned %d\n", THIS_MODULE->name, ret);
         kfree(k_buff);
-        return -EFAULT;
+    	return -EFAULT;
     }
-    printk(KERN_INFO "%s: Wrote bytes: %d\n", THIS_MODULE->name, nbytes);
+    printk(KERN_INFO"%s: Wrote bytes: %d\n", THIS_MODULE->name, nbytes);
 
     // free allocated kernel buffer
     kfree(k_buff);
@@ -224,40 +209,8 @@ ssize_t ro_write(struct file *p_file, const char __user *p_buff, size_t len, lof
  */
 int ro_open(struct inode *p_inode, struct file *p_file)
 {
-    ro_usb_dev_t *usb_dev;
-    struct usb_interface *interface;
-    int minor, ret;
     printk(KERN_INFO "%s: open called\n", THIS_MODULE->name);
-
-    minor = iminor(p_inode);
-    interface = usb_find_interface(&ro_driver, minor);
-    if (IS_ERR(interface))
-    {
-        pr_err("%s - error, can't find device for minor %d\n",
-               __func__, minor);
-        ret = -ENODEV;
-        goto exit;
-    }
-
-    usb_dev = usb_get_intfdata(interface);
-	if (IS_ERR(usb_dev)) {
-		ret = -ENODEV;
-		goto exit;
-	}
-
-    ret = usb_autopm_get_interface(interface);
-    if(ret < 0){
-        goto exit;
-    }
-
-    kref_get(&usb_dev->kref);
-    p_file->private_data = usb_dev;
-
     return 0;
-
-
-    exit:
-    return ret;
 }
 
 /**
@@ -270,21 +223,6 @@ int ro_open(struct inode *p_inode, struct file *p_file)
 int ro_release(struct inode *p_inode, struct file *p_file)
 {
     printk(KERN_INFO "%s: release called\n", THIS_MODULE->name);
-
-	ro_usb_dev_t *dev;
-
-	dev = p_file->private_data;
-	if (dev == NULL)
-		return -ENODEV;
-
-	/* allow the device to be autosuspended */
-	usb_autopm_put_interface(dev->interface);
-
-	/* decrement the count on our device */
-	kref_put(&dev->kref, skel_delete);
-	return 0;
-
-
     return 0;
 }
 

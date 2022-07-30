@@ -6,8 +6,10 @@
         "device.h": "c",
         "uart.h": "c",
         "device_mmio.h": "c",
-        "log.h": "c",
-        "usb_ch9.h": "c"
+        "ring_buffer.h": "c",
+        "mem_stats.h": "c",
+        "usb_device.h": "c",
+        "usb-frame.h": "c"
     },
     "cmake.configureEnvironment": {
         "BOARD": "stm32f401_mini"
@@ -15,5 +17,4 @@
     "cmake.configureArgs": [
         "-G\"Unix Makefiles\""
     ],
-    "cmake.configureOnOpen": false,
 }
