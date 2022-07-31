@@ -3,10 +3,12 @@
 #include <linux/usb.h>
 #include <linux/uaccess.h>
 #include <linux/slab.h>
-#define MIN(a,b) (((a) <= (b)) ? (a) : (b))
+
+#define MIN(a, b) (((a) <= (b)) ? (a) : (b))
 #define BULK_EP_OUT 0x01
 #define BULK_EP_IN 0x81
 uint8_t maxPacketSize = 0x40;
+
 /**
  * @brief Function to be called when usb device is attached to the system matching the id table elntry
  *
@@ -23,10 +25,58 @@ int ro_probe(struct usb_interface *intf, const struct usb_device_id *id);
  */
 void ro_disconnect(struct usb_interface *intf);
 
-ssize_t ro_read(struct file *, char __user *, size_t, loff_t *);
-ssize_t ro_write(struct file *, const char __user *, size_t, loff_t *);
-int ro_open(struct inode *, struct file *);
-int ro_release(struct inode *, struct file *);
+/**
+ * @brief Routine to be called when read() system call is invoked
+ *
+ * @param pfile pointer to file
+ * @param pbuf pointer to userspace buffer
+ * @param len no. of bytes to be read
+ * @param poffset offset from beginning
+ * @return ssize_t  -1 if failed else no. of bytes successfully read
+ */
+ssize_t ro_read(struct file *pfile, char __user *pbuf, size_t len, loff_t *poffset);
+
+
+/**
+ * @brief Callback for write operation by user space program
+ * Write data to bulk endpoint
+ * @param p_file pointer to struct file
+ * @param p_buff pointer to userspace buffer to be written
+ * @param len number of bytes to be written
+ * @param _offset offset of file
+ * @return ssize_t number of bytes successfully written
+ */
+ssize_t ro_write(struct file *pfile, const char __user *pbuf, size_t len, loff_t *poffset);
+
+/**
+ * @brief Callback function when read system call is called by userspace program
+ * - Allocate memory required to hold a device and initialize data structures
+ * @param p_inode pointer to inode
+ * @param p_file pointer to struct file
+ * @return int 0 if success else negative error status
+ */
+int ro_open(struct inode *pinode, struct file *pfile);
+
+/**
+ * @brief Routine to be called when close() system call is invoked
+ * 
+ * @param pfile pointer to file
+ * @param id owener id
+ * @return int 0 if success else negative error code
+ */
+int ro_flush (struct file * pfile, fl_owner_t id);
+
+
+/**
+ * @brief callback function when close() system call is called by userspace program
+ *  - Release resource allocated in open() system call
+ * @param p_inode pointer to inode
+ * @param p_file opinter to struct file
+ * @return int 0 if success else negative error status
+ */
+int ro_release(struct inode *pinode, struct file *pfile);
+
+
 
 static struct usb_device_id ro_id_table[] =
     {
@@ -49,6 +99,7 @@ static struct file_operations ro_fops = {
     .open = ro_open,
     .read = ro_read,
     .write = ro_write,
+    .flush = ro_flush,
     .release = ro_release};
 
 /**
@@ -100,7 +151,7 @@ int ro_probe(struct usb_interface *intf, const struct usb_device_id *id)
     printk(KERN_INFO "%s: interface no.-> %04X \n", THIS_MODULE->name, active_config->desc.bInterfaceNumber);
     printk(KERN_INFO "%s: total endpoints-> %04X\n", THIS_MODULE->name, active_config->desc.bNumEndpoints);
     printk(KERN_INFO "%s: interface class-> %04X\n", THIS_MODULE->name, active_config->desc.bInterfaceClass);
-    // printk(KERN_INFO "%s: exit module\n", THIS_MODULE->name);    
+    // printk(KERN_INFO "%s: exit module\n", THIS_MODULE->name);
     for (i = 0; i < active_config->desc.bNumEndpoints; i++)
     {
         endpoint = (active_config->endpoint + i);
@@ -131,44 +182,27 @@ void ro_disconnect(struct usb_interface *intf)
 }
 
 
-/**
- * @brief Callback function
- * 
- * @param p_file 
- * @param p_buff 
- * @param max_len 
- * @param _offset 
- * @return ssize_t 
- */
 ssize_t ro_read(struct file *p_file, char __user *p_buff, size_t max_len, loff_t *_offset)
 {
     printk(KERN_INFO "%s: read called\n", THIS_MODULE->name);
     return -1;
 }
 
-/**
- * @brief Callback for write operation by user space program
- * Write data to bulk endpoint
- * @param p_file pointer to struct file
- * @param p_buff pointer to userspace buffer to be written
- * @param len number of bytes to be written
- * @param _offset offset of file
- * @return ssize_t number of bytes successfully written
- */
 ssize_t ro_write(struct file *p_file, const char __user *p_buff, size_t len, loff_t *_offset)
 {
     int pipe, bytes_to_write, nbytes, ret;
     void *k_buff;
 
     printk(KERN_INFO "%s: write called (%lu bytes)\n", THIS_MODULE->name, len);
-    
+
     bytes_to_write = MIN(maxPacketSize, len);
 
     // allocate kernel space buffer for holding data to be written
     k_buff = kmalloc(bytes_to_write, GFP_KERNEL);
-    if(IS_ERR(k_buff)){
+    if (IS_ERR(k_buff))
+    {
         // could not allocate buffer in kernel space
-        printk(KERN_ERR"%s kmalloc() failed\n", THIS_MODULE->name);
+        printk(KERN_ERR "%s kmalloc() failed\n", THIS_MODULE->name);
         return -ENOMEM;
     }
 
@@ -176,7 +210,8 @@ ssize_t ro_write(struct file *p_file, const char __user *p_buff, size_t len, lof
 
     // copy_from_user returens no. of bytes no copied
     nbytes = bytes_to_write - copy_from_user(k_buff, p_buff, bytes_to_write);
-    if(nbytes == 0){
+    if (nbytes == 0)
+    {
         pr_err("%s no data to write\n", THIS_MODULE->name);
         kfree(k_buff);
         return -EFAULT;
@@ -186,40 +221,32 @@ ssize_t ro_write(struct file *p_file, const char __user *p_buff, size_t len, lof
     pipe = usb_sndbulkpipe(ro_device, BULK_EP_OUT);
 
     // write data to usb device
-    ret = usb_bulk_msg(ro_device, pipe, k_buff, bytes_to_write , &nbytes, 5000);
+    ret = usb_bulk_msg(ro_device, pipe, k_buff, bytes_to_write, &nbytes, 5000);
     if (ret)
     {
-    	printk(KERN_ERR "%s: Bulk message returned %d\n", THIS_MODULE->name, ret);
+        printk(KERN_ERR "%s: Bulk message returned %d\n", THIS_MODULE->name, ret);
         kfree(k_buff);
-    	return -EFAULT;
+        return -EFAULT;
     }
-    printk(KERN_INFO"%s: Wrote bytes: %d\n", THIS_MODULE->name, nbytes);
+    printk(KERN_INFO "%s: Wrote bytes: %d\n", THIS_MODULE->name, nbytes);
 
     // free allocated kernel buffer
     kfree(k_buff);
     return nbytes;
 }
 
-/**
- * @brief Callback function when read system call is called by userspace program
- * - Allocate memory required to hold a device and initialize data structures
- * @param p_inode pointer to inode
- * @param p_file pointer to struct file
- * @return int 0 if success else negative error status
- */
+
 int ro_open(struct inode *p_inode, struct file *p_file)
 {
     printk(KERN_INFO "%s: open called\n", THIS_MODULE->name);
     return 0;
 }
 
-/**
- * @brief callback function when close() system call is called by userspace program
- *  - Release resource allocated in open() system call
- * @param p_inode pointer to inode
- * @param p_file opinter to struct file
- * @return int 0 if success else negative error status
- */
+int ro_flush (struct file * pfile, fl_owner_t id){
+    printk(KERN_INFO "%s: flush called\n", THIS_MODULE->name);
+    return 0;
+}
+
 int ro_release(struct inode *p_inode, struct file *p_file)
 {
     printk(KERN_INFO "%s: release called\n", THIS_MODULE->name);
