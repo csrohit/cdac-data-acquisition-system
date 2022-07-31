@@ -15,4 +15,5 @@
     "cmake.configureArgs": [
         "-G\"Unix Makefiles\""
     ],
+    "cmake.configureOnOpen": false,
 }

@@ -6,10 +6,10 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/rohit/zephyr/include",
                 "${workspaceFolder}/rohit/zephyr/include/generated",
-                "~/code/zephyrproject/zephyr/include",
-                "~/code/zephyrproject/zephyr/include/zephyr",
-                "~/code/zephyrproject/zephyr/include/generated",
-                "~/code/zephyrproject/zephyr/include/arch/arm/aarch32",
+                "~/zephyrproject/zephyr/include",
+                "~/zephyrproject/zephyr/include/zephyr",
+                "~/zephyrproject/zephyr/include/generated",
+                "~/zephyrproject/zephyr/include/arch/arm/aarch32",
                 "${workspaceFolder}/old-generated"
             ],
             "defines": [
