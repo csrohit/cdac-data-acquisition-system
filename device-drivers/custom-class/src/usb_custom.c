@@ -5,7 +5,6 @@
 #include <linux/proc_fs.h>
 #include "usb_custom.h"
 
-
 /**
  * @brief Function to be called when usb device is attached to the system matching the id table elntry
  *
@@ -21,7 +20,6 @@ static int ro_probe(struct usb_interface *intf, const struct usb_device_id *id);
  * @param intf pointer to registered interface
  */
 static void ro_disconnect(struct usb_interface *intf);
-
 
 struct usb_device_id ro_id_table[] =
     {
@@ -49,6 +47,10 @@ static __init int ro_init(void)
         pr_err("%s: proc_create() failed\n", THIS_MODULE->name);
         return -1;
     }
+
+    // initialize linked list
+    INIT_LIST_HEAD(&list_head.list);
+
     /* register this driver with the USB subsystem */
     ret = usb_register(&ro_driver);
     if (ret < 0)
@@ -56,21 +58,31 @@ static __init int ro_init(void)
         printk(KERN_ERR "%s usb_register() failed for driver (%s). Error number %d\n", THIS_MODULE->name, ro_driver.name, ret);
         return -1;
     }
-    printk(KERN_INFO " %s: Registered driver (%s) with USB subsystem\n", THIS_MODULE->name, ro_driver.name);
+    printk(KERN_INFO "%s: Registered driver (%s) with USB subsystem\n", THIS_MODULE->name, ro_driver.name);
     return 0;
 }
 
 static __exit void ro_exit(void)
 {
+    ro_usb_dev_t *temp, *trav;
     printk(KERN_INFO "%s: exit module\n", THIS_MODULE->name);
+
+    /* Free linked list */
+    // list_for_each_entry_safe(trav, temp, &list_head.list, list)
+    // {
+    //     pr_info("%s: Deleting %s\n", THIS_MODULE->name, trav->udev->devpath);
+    //     list_del(&trav->list);
+    //     // list_del_init(trav);
+    //     // kfree(trav);
+    //     trav = NULL;
+    // }
+
     /* deregister this driver with the USB subsystem */
     usb_deregister(&ro_driver);
 
     proc_remove(ent);
     printk(KERN_INFO "%s: Deregistered driver (%s) with USB subsystem\n", THIS_MODULE->name, ro_driver.name);
 }
-
-
 
 static int ro_probe(struct usb_interface *intf, const struct usb_device_id *id)
 {
@@ -121,6 +133,9 @@ static int ro_probe(struct usb_interface *intf, const struct usb_device_id *id)
         printk(KERN_ERR "%s usb_register_dev() failed to assign minor\n", THIS_MODULE->name);
         goto dev_reg_err;
     }
+    // add device to linked list
+    pr_info("%s: Adding device to linked list\n", THIS_MODULE->name);
+    list_add(&ro_dev->list, &list_head.list);
 
     ro_dev->is_connected = 1;
     dev_info(
@@ -151,10 +166,13 @@ static void ro_disconnect(struct usb_interface *intf)
     pr_info("%s: Deregistered device (%s) from usb subsystem\n", THIS_MODULE->name, ro_class.name);
     printk(KERN_INFO "%s: removed interface-> %#04X\n", THIS_MODULE->name, intf->cur_altsetting->desc.bInterfaceNumber);
 
+    /* Remove device from linked list */
+    pr_info("%s: Removing from linked list\n", THIS_MODULE->name);
+    list_del(&ro_dev->list);
+
     ret = kref_put(&ro_dev->kref, ro_dev_release);
     printk(KERN_INFO "%s: [disconnect] Kref put => %d\n", THIS_MODULE->name, ret);
 }
-
 
 void ro_dev_release(struct kref *kref)
 {
@@ -162,9 +180,11 @@ void ro_dev_release(struct kref *kref)
     ro_dev = container_of(kref, ro_usb_dev_t, kref);
     printk(KERN_INFO "%s: ro_dev_release called\n", THIS_MODULE->name);
 
+    pr_info("%s: Decrementing count on device\n", THIS_MODULE->name);
     // decrement usage count of usb device
     usb_put_dev(ro_dev->udev);
 
+    pr_info("%s: Decrementing count on interface\n", THIS_MODULE->name);
     // decrement usage count of interface
     usb_put_intf(ro_dev->interface);
 
@@ -172,7 +192,6 @@ void ro_dev_release(struct kref *kref)
     pr_info("%s: releasing resources for device\n", THIS_MODULE->name);
     kfree(ro_dev);
 }
-
 
 module_init(ro_init);
 module_exit(ro_exit);

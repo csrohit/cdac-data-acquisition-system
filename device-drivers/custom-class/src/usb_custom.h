@@ -22,7 +22,11 @@ typedef struct struct_ro_usb_dev
     uint8_t *bulk_in_buffer;
     size_t bulk_in_size;
     struct usb_interface *interface;
+    struct list_head list;
 } ro_usb_dev_t;
+
+extern ro_usb_dev_t list_head;
+
 
 void ro_dev_release(struct kref *kref);
 #endif
