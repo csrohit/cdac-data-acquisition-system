@@ -4,8 +4,6 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-#define LED_BLUE 0x34
-#define LED_YELLOW 0x35
 // #define LED_BLUE 0x34;
 #define CMD_TOGGLE 0x04
 
@@ -14,7 +12,7 @@ int main()
     int choice;
     frame_t frame;
     int ret;
-    int fd = open("/dev/node0", O_WRONLY);
+    int fd = open("/dev/node0", O_RDWR);
     if (fd < 0)
     {
         perror("open() failed\n");
@@ -34,7 +32,8 @@ int main()
             frame.peripheral_id = LED_BLUE;
             frame.payload_len = 0U;
             ret = write(fd, &frame, sizeof(frame));
-            if(ret < 0){
+            if (ret < 0)
+            {
                 perror("write() failed");
                 close(fd);
                 _exit(EXIT_FAILURE);
@@ -48,7 +47,8 @@ int main()
             frame.peripheral_id = LED_YELLOW;
             frame.payload_len = 0U;
             ret = write(fd, &frame, sizeof(frame));
-            if(ret < 0){
+            if (ret < 0)
+            {
                 perror("write() failed");
                 close(fd);
                 _exit(EXIT_FAILURE);
@@ -56,6 +56,22 @@ int main()
             break;
         case 3:
             printf("Temperature: 34\n");
+            frame.cmd = CMD_TOGGLE;
+            frame.peripheral_id = GET_TEMPERATURE;
+            frame.payload_len = 0U;
+            ret = write(fd, &frame, sizeof(frame));
+            if (ret < 0)
+            {
+                perror("write() failed");
+                close(fd);
+                _exit(EXIT_FAILURE);
+            }
+            char buff[4];
+            ret = read(fd, buff, sizeof(buff));
+            printf("Read %d bytes\n", ret);
+            printf("Peripheral id: %#x, cmd: %#x, len: %#x\n", buff[0], buff[1], buff[2]);
+            printf("Temperature data: %#x\n", buff[3]);
+            break;
         default:
             printf("Invalid choice\n");
             break;

@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "module.h": "c"
+        "module.h": "c",
+        "kernel.h": "c",
+        "usb_custom.h": "c"
     }
 }
