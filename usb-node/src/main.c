@@ -10,6 +10,8 @@
 #include <zephyr/usb/usb_ch9.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/kernel.h>
+#include "../usb-frame.h"
 
 LOG_MODULE_REGISTER(usb_driver, LOG_LEVEL_DBG);
 #define MAX_PACKET USB_MAX_FS_BULK_MPS
@@ -20,7 +22,7 @@ void callback_ep_out(uint8_t ep,
 					 enum usb_dc_ep_cb_status_code cb_status);
 
 void callback_ep_in(uint8_t ep,
-			  enum usb_dc_ep_cb_status_code cb_status);
+					enum usb_dc_ep_cb_status_code cb_status);
 struct ro_usb_config
 {
 	struct usb_if_descriptor if0;
@@ -86,6 +88,8 @@ void main(void)
 	// const struct device *dev;
 	uint32_t dtr = 0U;
 	int ret;
+	uint8_t buff[] = "rohit\r\n";
+	int read_bytes;
 	// ret = usb_set_config((const uint8_t *)&ro_usb_config);
 	printk("USB CFG DATA: %p\n", &ro_usb_config);
 	if (ret < 0)
@@ -107,10 +111,10 @@ void main(void)
 
 /**
  * @brief Callback function for usb device status change
- * 
+ *
  * @param cfg pointer to active configuration
  * @param cb_status usb device status
- * @param param 
+ * @param param
  */
 void ro_cb_usb_status(struct usb_cfg_data *cfg, enum usb_dc_status_code cb_status, const uint8_t *param)
 {
@@ -156,9 +160,7 @@ void ro_cb_usb_status(struct usb_cfg_data *cfg, enum usb_dc_status_code cb_statu
 		break;
 	}
 	LOG_INF(" ro_usb_dc_status_callback(): param=%hu, status=%s", (unsigned short)(*param), status);
-
 }
-
 
 //* functions for usb configuration
 
@@ -236,6 +238,8 @@ void callback_ep_out(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status)
 	LOG_DBG("Callback for Endpoint: %#x, Status: %#x", cb_status);
 	uint32_t read_bytes;
 	int ret;
+	frame_t *frame;
+	uint8_t *buff;
 	uint8_t data[MAX_PACKET]; // buffer to hold max packet length
 
 	// read from usb buffer
@@ -249,21 +253,36 @@ void callback_ep_out(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status)
 
 	// data is read and application can now use it
 	LOG_INF("Read %d bytes\n", read_bytes);
-	LOG_INF("peripheral_id: %#x", data[0]);
-	LOG_INF("cmd: %#x", data[1]);
-	LOG_INF("payoload_len: %#x", data[2]);
+	frame = (frame_t *)data;
+	LOG_INF("peripheral_id: %#x", frame->peripheral_id);
+	LOG_INF("cmd: %#x", frame->cmd);
+	LOG_INF("payoload_len: %#x", frame->payload_len);
 
-	if (data[0] == 0x34)
+	switch (frame->peripheral_id)
 	{
+	case LED_BLUE:
 		LOG_INF("Toggling Blue Led");
-	}
-	else if (data[0] == 0x35)
-	{
-		LOG_INF("Toggling Yellow Led");
-	}
-	else
-	{
-		LOG_INF("Unknown device");
+		break;
+	case LED_YELLOW:
+		LOG_INF("Toggling Yelloe Led");
+		break;
+	case GET_TEMPERATURE:
+		LOG_INF("Sending temperature %#x", 0x76);
+		buff = (uint8_t*) k_malloc(sizeof(frame) + 1);
+		frame->payload_len = 1;
+		memcpy(buff, frame, sizeof(frame));
+		buff[3] = 0x76;
+		ret = usb_write(RO_EP_IN_ADDR, buff, 4, &read_bytes);
+		if(ret < 0){
+			LOG_ERR("usb_write() failed");
+			return;
+		}
+		LOG_INF("Wrote %d bytes\n", read_bytes);
+		k_free(buff);
+		break;
+	default:
+		LOG_INF("Invalid command ");
+		break;
 	}
 }
 
@@ -276,5 +295,5 @@ void callback_ep_out(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status)
  */
 void callback_ep_in(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status)
 {
-	LOG_DBG("Callback for Endpoint: %#x, Status: %#x", cb_status);
+	LOG_DBG("Callback for Endpoint (updated msg): %#x, Status: %#x", ep, cb_status);
 }
