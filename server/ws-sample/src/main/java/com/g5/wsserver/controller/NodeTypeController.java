@@ -1,6 +1,7 @@
 package com.g5.wsserver.controller;
 
 import com.g5.wsserver.model.ErrorResponse;
+import com.g5.wsserver.model.Node;
 import com.g5.wsserver.model.NodeType;
 import com.g5.wsserver.service.NodeTypeService;
 import org.slf4j.Logger;
@@ -35,12 +36,12 @@ public class NodeTypeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<NodeType>> findAll(){
+    public ResponseEntity<List<Node>> findAll(){
         ResponseEntity responseEntity = null;
         try{
             responseEntity = ResponseEntity.ok().body(nodeTypeService.findAll());
         }catch (Exception e){
-            LOG.error("Couldn't find nodetype", e);
+            LOG.error("Couldn't find node", e);
             responseEntity = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("Couldn't save node type"));
         }
         return responseEntity;
