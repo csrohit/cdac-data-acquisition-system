@@ -1,5 +1,7 @@
 package com.g5.wsserver.service;
 
+import com.g5.wsserver.exceptions.NotFoundException;
+import com.g5.wsserver.model.Device;
 import com.g5.wsserver.model.Node;
 import com.g5.wsserver.repository.NodeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class NodeService {
@@ -36,5 +39,15 @@ public class NodeService {
         return repository.findById(id);
     }
 
+    public Set<Device> getDevices(@NonNull Integer nodeId) throws NotFoundException {
 
+        Optional<Node> optionalNode = repository.findById(nodeId);
+        if(optionalNode.isEmpty()){
+            throw new NotFoundException("Node doesn't exist");
+        }
+
+        Node node = optionalNode.get();
+
+        return node.getDevices();
+    }
 }

@@ -28,7 +28,7 @@ public class MainController {
     }
 
     @MessageMapping("/usb")
-    @SendTo("/topic/news")
+    // @SendTo("/topic/news")
     public String broadcastNews(@Payload WebsocketMessage message) {
 //        try {
             System.out.println("Serial: "+ message.getDeviceId());
@@ -74,5 +74,11 @@ public class MainController {
     }
 
 
+
+    @MessageMapping("/news")
+    @SendTo("/topic/news")
+    public String broadcastNews(@Payload String message) {
+        return message;
+    }
 
 }

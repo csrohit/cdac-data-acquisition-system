@@ -1,6 +1,8 @@
 package com.g5.wsserver.controller;
 
 
+import com.g5.wsserver.exceptions.NotFoundException;
+import com.g5.wsserver.model.Device;
 import com.g5.wsserver.model.ErrorResponse;
 import com.g5.wsserver.model.Node;
 import com.g5.wsserver.service.NodeService;
@@ -56,6 +58,21 @@ public class NodeController {
         }catch (Exception e){
             LOG.error("Couldn't find node", e);
             responseEntity = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("Couldn't save node"));
+        }
+        return responseEntity;
+    }
+
+    @GetMapping("{id}/devices")
+    public ResponseEntity<List<Device>> findDevices(@PathVariable(value = "id") Integer id){
+        ResponseEntity responseEntity = null;
+        try{
+            responseEntity = ResponseEntity.ok().body(service.getDevices(id));
+        }catch (NotFoundException e){
+            LOG.error("Couldn't find node", e);
+            responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Invalid node id"));
+        }catch (Exception e){
+            LOG.error("Couldn't find node", e);
+            responseEntity = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("Couldn't find node"));
         }
         return responseEntity;
     }
