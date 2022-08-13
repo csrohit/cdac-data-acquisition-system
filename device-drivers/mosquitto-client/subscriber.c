@@ -11,11 +11,13 @@
 #include "frame.h"
 #define DEBUG
 
+
+
 int mid = 12;
 const char *host = "localhost";
 const char *bind_address = "0.0.0.0";
 const int port = 1883U;
-const char *topic = "usb/black-pill";
+const char *topic = "#";
 const char *client_id = "usb_handler";
 const char *priv_data = "Data for all callbacks";
 struct mosquitto *client = NULL;
@@ -141,10 +143,10 @@ void on_message(struct mosquitto *mosq, void *obj, const struct mosquitto_messag
     printf("Message from topic %s:%s\n", msg->topic, (char *)msg->payload);
     printf("Message id: %d, payload_len: %d\n", msg->mid, msg->payloadlen);
     mqtt_frame_t *t = (mqtt_frame_t *)msg->payload;
-    printf("Device addr: %#x, peripheral_id: %#x, cmd: %#x\n", t->serial_no, t->peripheral_addr, t->cmd);
-    if (msg->payloadlen > 3)
+    printf(" peripheral_id: %#x, cmd: %#x\n", t->peripheral_addr, t->cmd);
+    if (msg->payloadlen > sizeof(mqtt_frame_t))
     {
-        printf("Data: %s\n", (char *)(msg->payload + 3));
+        printf("Data: %s\n", (char *)(msg->payload + sizeof(mqtt_frame_t)));
     }
 
     int fd = open("/dev/node0", O_RDWR), ret;
