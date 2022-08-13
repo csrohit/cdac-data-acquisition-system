@@ -23,7 +23,7 @@ static void ro_disconnect(struct usb_interface *intf);
 
 struct usb_device_id ro_id_table[] =
     {
-        {USB_DEVICE(0x2fff, 0x0001)},
+        {USB_DEVICE_INTERFACE_CLASS(0x2fff, 0x0001, 0xff)},
         {} /* Terminating entry */
 };
 MODULE_DEVICE_TABLE(usb, ro_id_table); // register id table with usb core

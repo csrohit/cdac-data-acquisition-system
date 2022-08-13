@@ -10,6 +10,8 @@
 #include <zephyr/usb/usb_ch9.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
 #include "../usb-frame.h"
 
@@ -18,11 +20,18 @@ LOG_MODULE_REGISTER(usb_driver, LOG_LEVEL_DBG);
 #define RO_EP_OUT_ADDR 0X01
 #define RO_EP_IN_ADDR 0X81
 
+#define LED DT_ALIAS(blueled)
+#define LEDY DT_ALIAS(yellowled)
+static const struct gpio_dt_spec led_blue = GPIO_DT_SPEC_GET(LED, gpios);
+static const struct gpio_dt_spec led_yellow = GPIO_DT_SPEC_GET(LEDY, gpios);
+
 void callback_ep_out(uint8_t ep,
 					 enum usb_dc_ep_cb_status_code cb_status);
 
 void callback_ep_in(uint8_t ep,
 					enum usb_dc_ep_cb_status_code cb_status);
+
+void handle_led(uint8_t cmd, struct gpio_dt_spec *p_spec);
 struct ro_usb_config
 {
 	struct usb_if_descriptor if0;
@@ -90,13 +99,31 @@ void main(void)
 	int ret;
 	uint8_t buff[] = "rohit\r\n";
 	int read_bytes;
-	// ret = usb_set_config((const uint8_t *)&ro_usb_config);
-	printk("USB CFG DATA: %p\n", &ro_usb_config);
+	if (!device_is_ready(led_blue.port))
+	{
+		LOG_ERR("Blue led is not ready");
+		return 0;
+	}
+	if (!device_is_ready(led_yellow.port))
+	{
+		LOG_ERR("Yellow led is not ready");
+		return 0;
+	}
+
+	ret = gpio_pin_configure_dt(&led_blue, GPIO_OUTPUT_ACTIVE);
 	if (ret < 0)
 	{
-		LOG_ERR("Could not set usb config");
+		LOG_ERR("Could not configure led as output");
 		return;
 	}
+	ret = gpio_pin_configure_dt(&led_yellow, GPIO_OUTPUT_ACTIVE);
+	if (ret < 0)
+	{
+		LOG_ERR("Could not configure led as output");
+		return;
+	}
+
+	LOG_DBG("LED are set as output");
 
 	ret = usb_enable(NULL);
 	if (ret < 0)
@@ -252,7 +279,7 @@ void callback_ep_out(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status)
 	}
 
 	// data is read and application can now use it
-	LOG_INF("Read %d bytes\n", read_bytes);
+	LOG_INF("\nRead %d bytes", read_bytes);
 	frame = (frame_t *)data;
 	LOG_INF("peripheral_id: %#x", frame->peripheral_id);
 	LOG_INF("cmd: %#x", frame->cmd);
@@ -261,27 +288,15 @@ void callback_ep_out(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status)
 	switch (frame->peripheral_id)
 	{
 	case LED_BLUE:
-		LOG_INF("Toggling Blue Led");
+		LOG_INF("Device:  Blue Led");
+		handle_led(frame->cmd, &led_blue);
 		break;
 	case LED_YELLOW:
-		LOG_INF("Toggling Yelloe Led");
-		break;
-	case GET_TEMPERATURE:
-		LOG_INF("Sending temperature %#x", 0x76);
-		buff = (uint8_t*) k_malloc(sizeof(frame) + 1);
-		frame->payload_len = 1;
-		memcpy(buff, frame, sizeof(frame));
-		buff[3] = 0x76;
-		ret = usb_write(RO_EP_IN_ADDR, buff, 4, &read_bytes);
-		if(ret < 0){
-			LOG_ERR("usb_write() failed");
-			return;
-		}
-		LOG_INF("Wrote %d bytes\n", read_bytes);
-		k_free(buff);
+		LOG_INF("Device:  Yellow Led");
+		handle_led(frame->cmd, &led_yellow);
 		break;
 	default:
-		LOG_INF("Invalid command ");
+		LOG_INF("Invalid peripheral ");
 		break;
 	}
 }
@@ -297,3 +312,72 @@ void callback_ep_in(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status)
 {
 	LOG_DBG("Callback for Endpoint (updated msg): %#x, Status: %#x", ep, cb_status);
 }
+
+void handle_led(uint8_t cmd, struct gpio_dt_spec *p_spec)
+{
+	switch (cmd)
+	{
+	case LED_ON:
+		LOG_INF("Command: ON");
+		gpio_pin_set_dt(p_spec, 0x01);
+		break;
+	case LED_OFF:
+		LOG_INF("Command: OFF");
+		gpio_pin_set_dt(p_spec, 0x00);
+		break;
+	case LED_TOGGLE:
+		LOG_INF("Command: TOGGLE");
+		gpio_pin_toggle_dt(p_spec);
+		break;
+	case LED_BLINK:
+		LOG_INF("Command: BLINK");
+		gpio_pin_toggle_dt(p_spec);
+		k_msleep(500);
+		gpio_pin_toggle_dt(p_spec);
+		break;
+	default:
+		break;
+	}
+}
+
+// void handle_temperature()
+// {
+
+// 	switch (cmd)
+// 	{
+// 	case 0x01:
+// 		/* code */
+// 		// send temperature data to driver (beagle bone)
+// 		buff = (uint8_t *)k_malloc(sizeof(frame) + 1);
+// 		frame->payload_len = 1;
+// 		memcpy(buff, frame, sizeof(frame));
+// 		buff[3] = 0x76;	 /// temperature value
+// 		ret = usb_write(RO_EP_IN_ADDR, buff, 4, &read_bytes);
+// 		if (ret < 0)
+// 		{
+// 			LOG_ERR("usb_write() failed");
+// 			return;
+// 		}
+// 		LOG_INF("Wrote %d bytes\n", read_bytes);
+// 		k_free(buff);
+// 		uart_transmit(tempra) break;
+
+// 	case 0x02:
+// 		// send temperature in celcious
+// 		buff = (uint8_t *)k_malloc(sizeof(frame) + 1);
+// 		frame->payload_len = 1;
+// 		memcpy(buff, frame, sizeof(frame));
+// 		buff[3] = 0x99;  => convert to celcius
+// 		ret = usb_write(RO_EP_IN_ADDR, buff, 4, &read_bytes);
+// 		if (ret < 0)
+// 		{
+// 			LOG_ERR("usb_write() failed");
+// 			return;
+// 		}
+// 		LOG_INF("Wrote %d bytes\n", read_bytes);
+// 		k_free(buff);
+
+// 	default:
+// 		break;
+// 	}
+// }
