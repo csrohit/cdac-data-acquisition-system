@@ -50,6 +50,21 @@ public class NodeController {
         return responseEntity;
     }
 
+    @PutMapping("{id}")
+    public ResponseEntity<Node> update(@PathVariable(value = "id") Integer id, @RequestBody Node node){
+        ResponseEntity responseEntity = null;
+        try{
+            responseEntity = new ResponseEntity(service.update(id, node), HttpStatus.OK);
+        }catch (NotFoundException e){
+            LOG.error("Couldn't find node", e);
+            responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Invalid node id"));
+        }catch (Exception e){
+            LOG.error("Couldn't find node", e);
+            responseEntity = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("Couldn't find node"));
+        }
+        return responseEntity;
+    }
+
     @GetMapping("{id}")
     public ResponseEntity<List<Node>> findById(@PathVariable(value = "id") Integer id){
         ResponseEntity responseEntity = null;

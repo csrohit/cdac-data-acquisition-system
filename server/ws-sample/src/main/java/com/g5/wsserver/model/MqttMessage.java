@@ -1,27 +1,23 @@
 package com.g5.wsserver.model;
 
-public class MqttUsbMessage {
-    private byte serial;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class MqttMessage {
     private byte peripheralId;
     private byte command;
     private String data;
 
-    public MqttUsbMessage(byte serial, byte peripheralId, byte command, String data) {
-        this.serial = serial;
+
+    public MqttMessage() {
+        data = "";
+    }
+
+    public MqttMessage(byte peripheralId, byte command, String data) {
         this.peripheralId = peripheralId;
         this.command = command;
         this.data = data;
-    }
-
-    public MqttUsbMessage() {
-    }
-
-    public byte getSerial() {
-        return serial;
-    }
-
-    public void setSerial(byte serial) {
-        this.serial = serial;
     }
 
     public byte getPeripheralId() {
@@ -48,26 +44,27 @@ public class MqttUsbMessage {
         this.data = data;
     }
 
+    public byte[] getBytes(){
+        if(data == null){
+            data = "";
+        }
+        int len = data.length();
+        byte dataBytes[] = data.getBytes();
+        byte[] arr = new byte[2 + len];
+                arr[0] = peripheralId;
+                arr[1] = command;
+                for (int i=0; i<len; i++){
+                    arr[2+i] = dataBytes[i];
+                }
+        return arr;
+    }
+
     @Override
     public String toString() {
-        return "MqttUsbMessage{" +
-                "serial=" + serial +
-                ", peripheralId=" + peripheralId +
+        return "MqttMessage{" +
+                "peripheralId=" + peripheralId +
                 ", command=" + command +
                 ", data='" + data + '\'' +
                 '}';
-    }
-
-    public byte[] getBytes(){
-        int len = data.length();
-        byte dataBytes[] = data.getBytes();
-        byte[] arr = new byte[3 + len];
-                arr[0] = serial;
-                arr[1] = peripheralId;
-                arr[2] = command;
-                for (int i=0; i<len; i++){
-                    arr[3+i] = dataBytes[i];
-                }
-        return arr;
     }
 }

@@ -8,7 +8,7 @@ import reactor.util.annotation.NonNull;
 public class Device extends IdLabelDescription{
 
 	@NonNull
-	private Integer hwId;
+	private byte hwId;
 
 	@NonNull
 	@ManyToOne
@@ -24,11 +24,11 @@ public class Device extends IdLabelDescription{
 	}
 
 	@NonNull
-	public Integer getHwId() {
+	public byte getHwId() {
 		return hwId;
 	}
 
-	public void setHwId(@NonNull Integer hwId) {
+	public void setHwId(@NonNull byte hwId) {
 		this.hwId = hwId;
 	}
 
