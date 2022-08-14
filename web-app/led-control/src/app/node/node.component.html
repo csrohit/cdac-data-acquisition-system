@@ -1,1 +1,15 @@
-<p>node works!</p>
+<h2>List of available nodes</h2>
+<div class="node-container">
+
+<div *ngFor="let node of nodes$ | async" class="node">
+    <h4 class="caption">{{node.label}}</h4>
+    <p class="description"><mat-icon class="material-icons-outlined">description</mat-icon> {{node.description}}</p>
+    <p class="caption"><mat-icon class="material-icons-outlined">developer_board</mat-icon> {{node.type.label}}</p>
+    <p class="mq-topic"><mat-icon class="material-icons-outlined">import_export</mat-icon> {{node.mqTopic}}</p>
+    <div class="action-buttons">
+        <button color="primary" mat-button>Edit</button>
+        <button color="warn" mat-button>Delete</button>
+        <button color="accent" mat-button>View Devices</button>
+    </div>
+
+</div>

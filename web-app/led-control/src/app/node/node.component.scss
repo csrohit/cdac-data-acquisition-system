@@ -1,0 +1,12 @@
+@import '/src/sass/abstracts/variables';
+@import '/src/sass/abstracts/mixins';
+
+.node-container{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    column-gap: 1rem;
+    row-gap: 1rem;
+    .node{
+      @include card($padding: 1rem);
+    }
+}
