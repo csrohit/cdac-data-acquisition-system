@@ -1,1 +1,27 @@
-<p>device-list works!</p>
+<button color="primary" mat-button (click)="onGoToNodeClick()">&lt; nodes</button>
+
+<div class="device-container">
+    <div *ngFor="let device of devices$ | async" class="device">
+        <h4>{{device.label}}</h4>
+        <div class="description"><mat-icon class="material-icons-outlined">description</mat-icon> <span>{{device.description}}</span></div>
+        <div class="caption"><mat-icon class="material-icons-outlined">developer_board</mat-icon> <span>{{device.type.label}}</span></div>
+        <div class="action-buttons">
+            <button color="primary" mat-button>Edit</button>
+            <button color="warn" mat-button>Delete</button>
+            <button color="accent" mat-button (click)="onViewCommandsClick()">View Commands</button>
+        </div>
+
+        <div *ngIf="areCommandsVisible" class="commands">
+            <div *ngFor="let cmd of device.type.cmdList" class="command">
+                <span>{{cmd.label}} <button mat-button color="primary" (click)="onRunCommandClick(device.id, cmd.name)">run</button></span>
+            </div>
+        </div>
+
+
+
+
+    </div>
+
+
+
+</div>

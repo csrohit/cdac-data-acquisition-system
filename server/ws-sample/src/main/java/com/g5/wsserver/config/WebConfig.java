@@ -1,4 +1,4 @@
-package com.g5.wsserver.configuration;
+package com.g5.wsserver.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -11,6 +11,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**");
+        registry.addMapping("/**").allowedOrigins("*")
+                .allowedMethods("POST", "GET", "OPTIONS", "PUT", "DELETE")
+                .maxAge(3600);
     }
 }

@@ -1,4 +1,4 @@
-package com.g5.wsserver.configuration;
+package com.g5.wsserver.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

@@ -2,10 +2,7 @@
 // This file contains all application-wide Sass mixins.
 // -----------------------------------------------------------------------------
 
-/// Event wrapper
-/// @author Harry Roberts
-/// @param {Bool} $self [false] - Whether or not to include current selector
-/// @link https://twitter.com/csswizardry/status/478938530342006784 Original tweet from Harry Roberts
+@import 'variables';
 @mixin on-event($self: false) {
   @if $self {
     &,
@@ -24,7 +21,6 @@
     }
   }
 }
-
 /// Make a context based selector a little more friendly
 /// @author Kitty Giraudel
 /// @param {String} $context
@@ -41,3 +37,8 @@
   padding: $padding;
 }
 
+@mixin grid($columns, $column-gap) {
+  display: grid;
+  grid-template-columns: $columns;
+  column-gap: $column-gap;
+}

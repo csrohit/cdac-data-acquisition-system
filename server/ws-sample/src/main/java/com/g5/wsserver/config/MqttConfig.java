@@ -1,4 +1,4 @@
-package com.g5.wsserver.configuration;
+package com.g5.wsserver.config;
 
 
 import org.eclipse.paho.client.mqttv3.IMqttClient;

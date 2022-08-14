@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Observable } from 'rxjs';
-import { IDevice } from 'src/app/model/interfaces';
+import { ActivatedRoute, Router } from '@angular/router';
+import { first, Observable } from 'rxjs';
+import { ICommand, IDevice } from 'src/app/model/interfaces';
+import { DeviceService } from 'src/app/service/device.service';
 import { NodeService } from 'src/app/service/node.service';
 
 @Component({
@@ -12,10 +13,13 @@ import { NodeService } from 'src/app/service/node.service';
 export class DeviceListComponent implements OnInit {
 
   devices$!: Observable<IDevice[]>;
+  areCommandsVisible = false;
 
   constructor(
     private nodeService: NodeService,
-    private activatedRoute: ActivatedRoute
+    private activatedRoute: ActivatedRoute,
+    private router: Router,
+    private deviceService: DeviceService
   ) { }
 
   ngOnInit(): void {
@@ -26,8 +30,24 @@ export class DeviceListComponent implements OnInit {
           .findDevices(params['id']);
       }
     })
+  }
 
+  /**
+   * Navigates to node-list component 
+   */
+  onGoToNodeClick(): void{
+    this.router.navigate(['node']);
+  }
 
+  /**
+   * Toggle command list
+   */
+  onViewCommandsClick(): void{
+    this.areCommandsVisible = !this.areCommandsVisible;
+  }
+
+  onRunCommandClick(id: IDevice['id'], cmdName: ICommand['name']): void{
+    this.deviceService.runCommand(id, cmdName).pipe(first()).subscribe(); 
   }
 
 }

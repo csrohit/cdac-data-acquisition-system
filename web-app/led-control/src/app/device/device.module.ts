@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 
 import { DeviceRoutingModule } from './device-routing.module';
 import { DeviceComponent } from './device.component';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 
 @NgModule({
@@ -11,7 +13,9 @@ import { DeviceComponent } from './device.component';
   ],
   imports: [
     CommonModule,
-    DeviceRoutingModule
+    DeviceRoutingModule,
+    MatButtonModule,
+    MatIconModule
   ]
 })
 export class DeviceModule { }

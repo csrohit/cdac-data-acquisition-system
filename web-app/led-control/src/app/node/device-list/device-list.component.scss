@@ -1,0 +1,14 @@
+@import '/src/sass/abstracts/mixins';
+
+.device-container{
+    padding: 1rem;
+    @include grid(repeat(4, 1fr), 1rem);
+    .device{
+        @include card($padding: 1rem);
+        > *{
+            .mat-icon{
+                margin-right: .5rem;
+            }
+        }
+    }
+}

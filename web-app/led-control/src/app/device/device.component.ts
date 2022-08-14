@@ -1,4 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Observable } from 'rxjs';
+import { IDevice } from '../model/interfaces';
+import { NodeService } from '../service/node.service';
 
 @Component({
   selector: 'app-device',
@@ -7,7 +11,20 @@ import { Component, OnInit } from '@angular/core';
 })
 export class DeviceComponent implements OnInit {
 
-  constructor() { }
+  devices$!: Observable<IDevice[]>
+
+  constructor(
+    private nodeService: NodeService,
+    private _route: ActivatedRoute
+  ) { 
+    this._route.params.subscribe(params => {
+      if(params['id']){
+        this.devices$ = this.nodeService.findDevices(params['id']);
+      }
+    })
+
+
+  }
 
   ngOnInit(): void {
   }
