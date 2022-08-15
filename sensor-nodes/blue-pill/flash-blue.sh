@@ -1,0 +1,1 @@
+st-flash write ./rohit/zephyr/zephyr.bin 0x08000000 
