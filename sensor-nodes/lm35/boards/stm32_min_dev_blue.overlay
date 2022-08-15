@@ -10,7 +10,7 @@
 		led-white = &led_b11;
 		led-green = &led_a7;
 		led-yellow = &led_a2;
-		ledred = &led_c14;
+		led-red = &led_c14;
 	};
 
 	leds {
