@@ -1,1 +1,0 @@
-st-flash -g 0x08000000 -b 115200 -w ".pio/build/genericSTM32F103C8/firmware.bin" "/dev/ttyUSB0"
