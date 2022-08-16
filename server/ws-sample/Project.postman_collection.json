@@ -1,0 +1,351 @@
+{
+	"info": {
+		"_postman_id": "98c3fceb-065a-4f42-95de-add048c4acf6",
+		"name": "Project",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "NodeType",
+			"item": [
+				{
+					"name": "Save Node Type",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"label\": \"Teensy 41\",\n    \"description\": \"Teensy 41 Development board with ARM CortexM7 MCU\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/node-type",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"node-type"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find All Node Types",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/node-type",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"node-type"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Device",
+			"item": [
+				{
+					"name": "Save Device",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Temperaure sensor connected to discovery board of Ujwala\",\n    \"type\": {\n        \"id\": 2\n    },\n    \"label\": \"Ambient Temperaure\",\n    \"node\": {\n        \"id\": 53\n    },\n    \"hwId\": 40\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/device",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"device"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Save Device Copy",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Temperaure sensor connected to discovery board of Ujwala\",\n    \"type\": {\n        \"id\": 2\n    },\n    \"label\": \"Ambient Temperaure\",\n    \"node\": {\n        \"id\": 53\n    },\n    \"hwId\": 40\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/device",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"device"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find All Device",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/api/device",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"device"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send CMD",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"toggle\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/device/1/cmd",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"device",
+								"1",
+								"cmd"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Device",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "DeviceType",
+			"item": [
+				{
+					"name": "Save Device Type [LED]",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"5 mm led\",\n    \"label\": \"Led\",\n    \"cmdList\": [\n        {\n            \"name\": \"on\",\n            \"description\": \"Turn on LED\",\n            \"label\": \"Turn On\",\n            \"hwValue\": 1\n        },\n        {\n            \"name\": \"off\",\n            \"description\": \"Turn off LED\",\n            \"label\": \"Turn Off\",\n            \"hwValue\": 2\n        },\n        {\n            \"name\": \"toggle\",\n            \"description\": \"Toggle state of led\",\n            \"label\": \"Toggle\",\n            \"hwValue\": 3\n        },\n        {\n            \"name\": \"blink\",\n            \"description\": \"Blink LED with given delay\",\n            \"label\": \"Blink\",\n            \"hwValue\": 4\n        },\n                {\n            \"name\": \"write\",\n            \"description\": \"Write given value to LED\",\n            \"label\": \"Write Value\",\n            \"hwValue\": 5\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/api/device-type",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"device-type"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find All Device Types",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/api/device-type",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"device-type"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Node",
+			"item": [
+				{
+					"name": "Find All Nodes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/node",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"node"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Save Node",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Discovery board of Prateek\",\n    \"type\": {\n        \"id\": 103\n    },\n    \"label\": \"Prateek STM32\",\n    \"mqTopic\": \"i2c/prateek_stm\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/node",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"node"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getDevices",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/node/2/devices",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"node",
+								"2",
+								"devices"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Node",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mqTopic\": \"purv_esp32\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{url}}/api/node/1",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"node",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "localhost:8080",
+			"type": "default"
+		}
+	]
+}
