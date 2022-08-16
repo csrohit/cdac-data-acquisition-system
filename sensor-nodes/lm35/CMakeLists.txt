@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 cmake_minimum_required(VERSION 3.20.0)
+# set(BOARD rpi_pico)
 set(BOARD stm32_min_dev_blue)
 # set(BOARD stm32f401_mini)
 set($ENV{ZEPHYR_BASE} /home/rohit/zephyrproject/zephyr)

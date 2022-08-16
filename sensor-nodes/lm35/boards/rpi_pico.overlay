@@ -1,0 +1,58 @@
+#include <zephyr/dt-bindings/adc/adc.h>
+
+/ {
+    zephyr,user {
+        /* adjust channel number according to pinmux in board.dts */
+        io-channels = <&adc1 0>;
+    };
+    aliases {
+        led-built-in = &led_19;
+        led-white = &led_20;
+        led-green = &led_17;
+        led-yellow = &led_21;
+        led-red = &led_16;
+    };
+    leds {
+        compatible = "gpio-leds";
+        led0: led_0 {
+            gpios = <&gpio0 0x19 0x0>;
+            label = "LED";
+        };
+    };
+    leds {
+        compatible = "gpio-leds";
+        led_19: led_19 {
+            gpios = <&gpio0 19 GPIO_ACTIVE_HIGH>;
+            label = "Rohit LED Pin C13";
+        };
+        led_16: led_16 {
+            gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
+            label = "Rohit LED Pin C14";
+        };
+        led_20: led_20 {
+            gpios = <&gpio0 20 GPIO_ACTIVE_HIGH>;
+            label = "Rohit LED Pin B11";
+        };
+        led_17: led_17 {
+            gpios = <&gpio0 17 GPIO_ACTIVE_HIGH>;
+            label = "Rohit LED Pin A7";
+        };
+        led_21: led_21 {
+            gpios = <&gpio0 21 GPIO_ACTIVE_HIGH>;
+            label = "Rohit LED Pin A2";
+        };
+    };
+};
+&adc1 {
+    #address-cells = <1>;
+    #size-cells = <0>;
+
+    channel@0 {
+        reg = <0>;
+        zephyr,gain = "ADC_GAIN_1";
+        zephyr,reference = "ADC_REF_INTERNAL";
+        zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+        zephyr,resolution = <12>;
+    };
+};
+
