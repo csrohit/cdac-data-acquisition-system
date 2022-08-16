@@ -3,6 +3,7 @@
 .device-container{
     padding: 1rem;
     @include grid(repeat(4, 1fr), 1rem);
+    row-gap: 1rem;
     .device{
         @include card($padding: 1rem);
         > *{
@@ -10,5 +11,6 @@
                 margin-right: .5rem;
             }
         }
+        
     }
 }
