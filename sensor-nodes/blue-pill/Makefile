@@ -4,11 +4,15 @@ BUILD_DIR:= rohit
 source:
 	cmake -Brohit
 
+only:
+	${MAKE} -C ${BUILD_DIR} -j11
+
 build: source
 	${MAKE} -C ${BUILD_DIR} -j11
 
 flash:
-	bash flash.sh
+		openocd -d2 -s /usr/local/bin/openocd/scripts -f interface/stlink.cfg -c "transport select hla_swd" -f target/stm32f4x.cfg -c "program {./rohit/zephyr/zephyr.elf}  verify reset; shutdown;"
+
 
 flash-link:
 	st-flash write ./${BUILD_DIR}/zephyr/zephyr.bin 0x08000000 
