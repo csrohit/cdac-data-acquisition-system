@@ -19,7 +19,7 @@ int main()
     printf("USB device test\n\n");
     do
     {
-        printf("1. Toggle Blue led\n2. Toggle Yellow Led\n3. Get temperature\n0. Exit\nEnter your choice: ");
+        printf("1. Toggle Blue led\n2. Toggle Yellow Led\n2. Toggle Green Led\n4. Toggle Red Led\n5. Toggle White Led\n6. Blink Red Led\n7. Get temperature\n0. Exit\nEnter your choice: ");
         scanf("%d", &choice);
 
         switch (choice)
@@ -53,6 +53,45 @@ int main()
             }
             break;
         case 3:
+            printf("Toggling Green led\n");
+            frame.cmd = LED_TOGGLE;
+            frame.peripheral_id = LED_GREEN;
+            frame.payload_len = 0U;
+            ret = write(fd, &frame, sizeof(frame));
+            if (ret < 0)
+            {
+                perror("write() failed");
+                close(fd);
+                _exit(EXIT_FAILURE);
+            }
+            break;
+        case 4:
+            printf("Toggling red led\n");
+            frame.cmd = LED_TOGGLE;
+            frame.peripheral_id = LED_RED;
+            frame.payload_len = 0U;
+            ret = write(fd, &frame, sizeof(frame));
+            if (ret < 0)
+            {
+                perror("write() failed");
+                close(fd);
+                _exit(EXIT_FAILURE);
+            }
+            break;
+        case 5:
+            printf("Toggling white led\n");
+            frame.cmd = LED_TOGGLE;
+            frame.peripheral_id = LED_WHITE;
+            frame.payload_len = 0U;
+            ret = write(fd, &frame, sizeof(frame));
+            if (ret < 0)
+            {
+                perror("write() failed");
+                close(fd);
+                _exit(EXIT_FAILURE);
+            }
+            break;
+        case 7:
             frame.cmd = LM35_READ;
             frame.peripheral_id = LM35;
             frame.payload_len = 0U;
@@ -73,6 +112,19 @@ int main()
             printf("Temperature data: %#x\n", buff->value);
             free(buff);
             // printf("Temperature data: %#x\n",  (int16_t)buff[3]);
+            break;
+        case 6:
+            printf("Blink red led\n");
+            frame.cmd = LED_BLINK;
+            frame.peripheral_id = LED_RED;
+            frame.payload_len = 0U;
+            ret = write(fd, &frame, sizeof(frame));
+            if (ret < 0)
+            {
+                perror("write() failed");
+                close(fd);
+                _exit(EXIT_FAILURE);
+            }
             break;
         default:
             printf("Invalid choice\n");
