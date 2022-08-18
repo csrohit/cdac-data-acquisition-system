@@ -104,7 +104,11 @@ const struct gpio_dt_spec led_green = GPIO_DT_SPEC_GET(DT_ALIAS(led_green), gpio
  * @brief Blink task to verfy that scheduler is working
  *
  */
-K_THREAD_DEFINE(blink0_id, STACKSIZE, blink, &led_builtin, 1000, NULL, PRIORITY, 0, 0);
+K_THREAD_DEFINE(blink0_id, STACKSIZE, blink, &led_builtin, 5000, NULL, PRIORITY, 0, 0);
+// K_THREAD_DEFINE(blink1_id, STACKSIZE, blink, &led_red, 500, NULL, PRIORITY, 0, 0);
+// K_THREAD_DEFINE(blink2_id, STACKSIZE, blink, &led_green, 300, NULL, PRIORITY, 0, 0);
+// K_THREAD_DEFINE(blink3_id, STACKSIZE, blink, &led_white, 400, NULL, PRIORITY, 0, 0);
+// K_THREAD_DEFINE(blink4_id, STACKSIZE, blink, &led_builtin, 600, NULL, PRIORITY, 0, 0);
 
 /* Actual work of processing commands is done by the threads */
 K_THREAD_DEFINE(worker_thread_id, STACKSIZE, work_handler, NULL, NULL, NULL, 1, 0, 0);
@@ -122,33 +126,41 @@ struct adc_sequence sequence = {
 
 void main(void)
 {
+	int ret;
 	led_setup(&led_red);
 	led_setup(&led_yellow);
 	led_setup(&led_white);
 	led_setup(&led_green);
 
-	int ret = usb_enable(NULL);
+	ret = usb_enable(NULL);
 	if (ret < 0)
 	{
 		LOG_ERR("usb_enable() failed");
 		return;
 	}
-	int err;
 
+	// setup adc channel
 	if (!device_is_ready(lm35.dev))
 	{
 		LOG_ERR("ADC controller device not ready");
 		return;
 	}
 
-	err = adc_channel_setup_dt(&lm35);
-	if (err < 0)
+	ret = adc_channel_setup_dt(&lm35);
+	if (ret < 0)
 	{
-		LOG_ERR("Could not setup lm35 (%d)", err);
+		LOG_ERR("Could not setup lm35 (%d)", ret);
 		return;
 	}
 }
 
+
+/**
+ * @brief Blink an led continuously as heartbeat
+ * 
+ * @param p1 pointer to led spec
+ * @param p2 sleep duration
+ */
 void blink(void *p1, void *p2)
 {
 	int ret;
@@ -241,7 +253,8 @@ void callback_ep_out(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status)
 {
 	uint32_t read_bytes;
 	int ret;
-	// frame_t *frame;
+
+	// allocate memory for new message which is to be freed in consumer task
 	frame_t *frame = k_malloc(sizeof(frame_t));
 	uint8_t data[MAX_PACKET]; // buffer to hold max packet length
 
@@ -250,33 +263,33 @@ void callback_ep_out(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status)
 	if (ret < 0)
 	{
 		LOG_ERR("usb_read() failed %d", ret);
-		// return ret;
 		return;
 	}
-
-	printk("\n");
 
 	LOG_INF("Read %d bytes", read_bytes);
 
 	memcpy(frame, data, sizeof(frame_t));
 
 	k_fifo_put(&work_fifo, frame);
-
-	// data is read and application can now use it
 }
 
+
+/**
+ * @brief Executes commands received by USB
+ * 
+ */
 void work_handler()
 {
 	LOG_DBG("Started work handler thread");
-	frame_t *frame;
+	static frame_t *frame;
 
 	while (1)
 	{
 		frame = k_fifo_get(&work_fifo,
 						   K_FOREVER);
 		LOG_DBG("peripheral_id: %#x", frame->peripheral_id);
-		LOG_INF("cmd: %#x", frame->cmd);
-		LOG_INF("payoload_len: %#x", frame->payload_len);
+		LOG_DBG("cmd: %#x", frame->cmd);
+		LOG_DBG("payoload_len: %#x", frame->payload_len);
 
 		switch (frame->peripheral_id)
 		{
@@ -284,7 +297,6 @@ void work_handler()
 			handle_led(frame->cmd, &led_builtin);
 			break;
 		case LED_YELLOW:
-			LOG_INF("Yellow led");
 			handle_led(frame->cmd, &led_yellow);
 			break;
 		case LED_RED:
@@ -298,13 +310,13 @@ void work_handler()
 			break;
 		case LM35:
 			handle_lm35(frame);
+			break;
 		default:
 			LOG_INF("Invalid peripheral ");
 			break;
 		}
+		k_free(frame);
 	}
-
-	k_free(frame);
 }
 
 /**
@@ -319,6 +331,13 @@ void callback_ep_in(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status)
 	LOG_DBG("Callback for Endpoint (updated msg): %#x, Status: %#x", ep, cb_status);
 }
 
+
+/**
+ * @brief Executes commands on led
+ * 
+ * @param cmd cmd value
+ * @param p_spec pointer to led spec
+ */
 void handle_led(uint8_t cmd, const struct gpio_dt_spec *p_spec)
 {
 	switch (cmd)
@@ -330,7 +349,6 @@ void handle_led(uint8_t cmd, const struct gpio_dt_spec *p_spec)
 		gpio_pin_set_dt(p_spec, 0x00);
 		break;
 	case LED_TOGGLE:
-		LOG_INF("Toggling");
 		gpio_pin_toggle_dt(p_spec);
 		break;
 	case LED_BLINK:
@@ -343,11 +361,18 @@ void handle_led(uint8_t cmd, const struct gpio_dt_spec *p_spec)
 	}
 }
 
+
+/**
+ * @brief Handle commands for lm35 temperature sensor
+ * 
+ * @param frame pointer to usb frame received from driver
+ */
 void handle_lm35(frame_t *frame)
 {
-	int err, ret;
-	uint32_t read_bytes;
-	int32_t val_mv;
+	static int err, ret;
+	static uint32_t read_bytes;
+	static int32_t val_mv;
+	static frame_ret_t frame_ret;
 
 	LOG_INF("ADC reading: ");
 
@@ -376,39 +401,39 @@ void handle_lm35(frame_t *frame)
 		LOG_INF("millivolts: %#x && %hd", val_mv, (int16_t)val_mv);
 	}
 
-	frame_ret_t * buff = (frame_ret_t *) k_malloc(sizeof(frame_ret_t));
-	buff->cmd = frame->cmd;
-	buff->peripheral_id = frame->peripheral_id;
-	buff->payload_len = 2;
-	buff->value = (uint16_t)val_mv;
-	// frame->payload_len = 2;
-	// memcpy(buff, frame, sizeof(frame));
-	// uint16_t tx_value = (int16_t)val_mv;
-	LOG_INF("Transmitted actual value: %#x, %hd", buff->value, buff->value);
-	// buff[sizeof(frame)] = tx_value; /// temperature value
-	ret = usb_write(RO_EP_IN_ADDR, buff, 5, &read_bytes);
+	frame_ret.cmd = frame->cmd;
+	frame_ret.peripheral_id = frame->peripheral_id;
+	frame_ret.payload_len = 2;
+	frame_ret.value = (uint16_t)val_mv;
+	LOG_INF("Transmitted actual value: %#x, %hd", frame_ret.value, frame_ret.value);
+	ret = usb_write(RO_EP_IN_ADDR, (const uint8_t *)&frame_ret, sizeof(frame_ret_t), &read_bytes);
 	if (ret < 0)
 	{
 		LOG_ERR("usb_write() failed");
 		return;
 	}
 	LOG_INF("Wrote %d bytes\n", read_bytes);
-	k_free(buff);
 }
 
+
+/**
+ * @brief Setup led as output
+ * 
+ * @param spec pointer to led spec
+ */
 void led_setup(const struct gpio_dt_spec *spec)
 {
 	int ret;
 	if (!device_is_ready(spec->port))
 	{
-		printk("Error: %s device is not ready\n", spec->port->name);
+		LOG_ERR("Error: %s device is not ready\n", spec->port->name);
 		return;
 	}
 
 	ret = gpio_pin_configure_dt(spec, GPIO_OUTPUT);
 	if (ret != 0)
 	{
-		printk("Error %d: failed to configure pin %d \n",
+		LOG_ERR("Error %d: failed to configure pin %d \n",
 			   ret, spec->pin);
 		return;
 	}
