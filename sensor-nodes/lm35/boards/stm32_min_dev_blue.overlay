@@ -9,7 +9,7 @@
 		led-built-in = &led_c13;
 		led-white = &led_b11;
 		led-green = &led_a7;
-		led-yellow = &led_a2;
+		led-yellow = &led_a5;
 		led-red = &led_c14;
 	};
 
@@ -31,7 +31,7 @@
 			gpios = <&gpioa 0x7 GPIO_ACTIVE_HIGH>;
 			label = "Rohit LED Pin A7";
 		};
-		led_a2: led_a2 {
+		led_a5: led_a5 {
 			gpios = <&gpioa 0x5 GPIO_ACTIVE_HIGH>;
 			label = "Rohit LED Pin A2";
 		};
