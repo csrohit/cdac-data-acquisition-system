@@ -27,4 +27,11 @@ typedef struct struct_usb_frame{
     uint8_t payload_len;
 } frame_t;
 
+typedef struct struct_usb_frame_ret{
+    uint16_t value;
+    uint8_t peripheral_id;  
+    uint8_t cmd;            
+    uint8_t payload_len;
+} frame_ret_t;
+
 #endif

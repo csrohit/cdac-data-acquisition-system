@@ -11,7 +11,7 @@ build: source
 	${MAKE} -C ${BUILD_DIR} -j11
 
 flash:
-		openocd -d2 -s /usr/local/bin/openocd/scripts -f interface/stlink.cfg -c "transport select hla_swd" -f target/stm32f4x.cfg -c "program {./rohit/zephyr/zephyr.elf}  verify reset; shutdown;"
+		openocd -d2 -s /usr/local/bin/openocd/scripts -f interface/stlink.cfg -c "transport select hla_swd" -f target/stm32f1x.cfg -c "program {./rohit/zephyr/zephyr.elf}  verify reset; shutdown;"
 
 
 flash-link:

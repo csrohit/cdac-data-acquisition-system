@@ -17,8 +17,6 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/sys/util.h>
 
-
-
 #if !DT_NODE_EXISTS(DT_PATH(zephyr_user)) || \
 	!DT_NODE_HAS_PROP(DT_PATH(zephyr_user), io_channels)
 #error "No suitable devicetree overlay specified"
@@ -27,14 +25,11 @@
 #define DT_SPEC_AND_COMMA(node_id, prop, idx) \
 	ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
-	/* Data of ADC io-channels specified in devicetree. */
-static struct adc_dt_spec adc_channels[] = {
-	DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels,
-			     DT_SPEC_AND_COMMA)
-};
+/* Data of ADC io-channels specified in devicetree. */
+static struct adc_dt_spec lm35 = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
 
 /* 1000 msec = 1 sec */
-#define SLEEP_TIME_MS   1000
+#define SLEEP_TIME_MS 1000
 
 /* The devicetree node identifier for the "led0" alias. */
 #define LED0_NODE DT_ALIAS(led_yellow)
@@ -49,17 +44,18 @@ void main(void)
 {
 	int ret;
 
-	if (!device_is_ready(led.port)) {
+	if (!device_is_ready(led.port))
+	{
 		return;
 	}
 
 	ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
-	if (ret < 0) {
+	if (ret < 0)
+	{
 		return;
 	}
 
-
-		int err;
+	int err;
 	int16_t buf;
 	struct adc_sequence sequence = {
 		.buffer = &buf,
@@ -67,58 +63,61 @@ void main(void)
 		.buffer_size = sizeof(buf),
 	};
 
-	/* Configure channels individually prior to sampling. */
-	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
-		if (!device_is_ready(adc_channels[i].dev)) {
-			printk("ADC controller device not ready\n");
-			return;
-		}
-
-		err = adc_channel_setup_dt(&adc_channels[i]);
-		if (err < 0) {
-			printk("Could not setup channel #%d (%d)\n", i, err);
-			return;
-		}
+	if (!device_is_ready(lm35.dev))
+	{
+		printk("ADC controller device not ready\n");
+		return;
 	}
 
-	while (1) {
+	err = adc_channel_setup_dt(&lm35);
+	if (err < 0)
+	{
+		printk("Could not setup channel  (%d)\n", err);
+		return;
+	}
+
+	while (1)
+	{
 		printk("ADC reading:\n");
-		for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++) {
-			int32_t val_mv;
+		int32_t val_mv;
 
-			printk("- %s, channel %d: ",
-			       adc_channels[i].dev->name,
-			       adc_channels[i].channel_id);
+		printk("- %s, channel %d: ",
+			   lm35.dev->name,
+			   lm35.channel_id);
 
-			(void)adc_sequence_init_dt(&adc_channels[i], &sequence);
+		(void)adc_sequence_init_dt(&lm35, &sequence);
 
-			err = adc_read(adc_channels[i].dev, &sequence);
-			if (err < 0) {
-				printk("Could not read (%d)\n", err);
-				continue;
-			} else {
-				printk("%"PRId16, buf);
-			}
-
-			/* conversion to mV may not be supported, skip if not */
-			val_mv = buf;
-			err = adc_raw_to_millivolts_dt(&adc_channels[i],
-						       &val_mv);
-			if (err < 0) {
-				printk(" (value in mV not available)\n");
-			} else {
-				printk(" = %"PRId32" mV\n", val_mv);
-			}
+		err = adc_read(lm35.dev, &sequence);
+		if (err < 0)
+		{
+			printk("Could not read (%d)\n", err);
+			continue;
+		}
+		else
+		{
+			printk("%" PRId16, buf);
 		}
 
+		/* conversion to mV may not be supported, skip if not */
+		val_mv = buf;
+		err = adc_raw_to_millivolts_dt(&lm35,
+									   &val_mv);
+		if (err < 0)
+		{
+			printk(" (value in mV not available)\n");
+		}
+		else
+		{
+			printk(" = %" PRId32 " mV\n", val_mv);
+		}
 		k_sleep(K_MSEC(1000));
 	}
 
-
-
-	while (1) {
+	while (1)
+	{
 		ret = gpio_pin_toggle_dt(&led);
-		if (ret < 0) {
+		if (ret < 0)
+		{
 			return;
 		}
 		k_msleep(SLEEP_TIME_MS);

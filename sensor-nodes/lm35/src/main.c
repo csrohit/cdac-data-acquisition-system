@@ -36,21 +36,15 @@ LOG_MODULE_REGISTER(blue_pill_lm35, LOG_LEVEL_DBG);
 	ADC_DT_SPEC_GET_BY_IDX(node_id, idx),
 
 /* Data of ADC io-channels specified in devicetree. */
-static struct adc_dt_spec adc_channels[] = {
-	DT_FOREACH_PROP_ELEM(DT_PATH(zephyr_user), io_channels,
-						 DT_SPEC_AND_COMMA)};
+static struct adc_dt_spec lm35 = ADC_DT_SPEC_GET_BY_IDX(DT_PATH(zephyr_user), 0);
 
 void blink(void *, void *);
-void callback_ep_out(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status);
+void handle_lm35();
 void work_handler();
+void handle_led(uint8_t cmd, const struct gpio_dt_spec *p_spec);
+void callback_ep_out(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status);
 void callback_ep_in(uint8_t ep, enum usb_dc_ep_cb_status_code cb_status);
 void led_setup(const struct gpio_dt_spec *spec);
-void handle_lm35();
-void handle_led(uint8_t cmd, const struct gpio_dt_spec *p_spec);
-void ro_usb_interface_config(struct usb_desc_header *head, uint8_t bInterfaceNumber);
-int ro_class_request_handler(struct usb_setup_packet *setup, int32_t *transfer_len, uint8_t **payload_data);
-int ro_custom_request_handler(struct usb_setup_packet *setup, int32_t *transfer_len, uint8_t **payload_data);
-int ro_vendor_request_handler(struct usb_setup_packet *setup, int32_t *len, uint8_t **data);
 void ro_cb_usb_status(struct usb_cfg_data *cfg,
 					  enum usb_dc_status_code cb_status,
 					  const uint8_t *param);
@@ -59,7 +53,6 @@ struct ro_usb_config
 	struct usb_if_descriptor if0;
 	struct usb_ep_descriptor if0_out_ep;
 	struct usb_ep_descriptor if0_in_ep;
-	// struct usb
 } __packed;
 
 USBD_CLASS_DESCR_DEFINE(primary, 0)
@@ -94,14 +87,8 @@ static struct usb_ep_cfg_data ep_cfg[] = {
 
 USBD_CFG_DATA_DEFINE(primary, rohit)
 struct usb_cfg_data ro_usb_config = {
-	.usb_device_description = NULL,				 // pointer to ch9 usb device descriptor
-	.interface_descriptor = &ro_cfg.if0,		 // pointer to ch9 interface descriptor (usb_if_descriptor)
-	.interface_config = ro_usb_interface_config, // for runtime configuration of interface
-	.interface = {
-		.class_handler = ro_class_request_handler, // request handler for class specific control (EP0) communication
-		.custom_handler = NULL,
-		.vendor_handler = ro_vendor_request_handler // request handler for vendor specific commands
-	},
+	.usb_device_description = NULL,		 // pointer to ch9 usb device descriptor
+	.interface_descriptor = &ro_cfg.if0, // pointer to ch9 interface descriptor (usb_if_descriptor)
 	.num_endpoints = ARRAY_SIZE(ep_cfg), // total number of endpoints in device descriptor table
 	.endpoint = ep_cfg,					 // pointer to array of endpoints cgf (usb_ep_cfg_data)
 	.cb_usb_status = ro_cb_usb_status	 // usb status change callback function
@@ -118,14 +105,21 @@ const struct gpio_dt_spec led_green = GPIO_DT_SPEC_GET(DT_ALIAS(led_green), gpio
  *
  */
 K_THREAD_DEFINE(blink0_id, STACKSIZE, blink, &led_builtin, 1000, NULL, PRIORITY, 0, 0);
+
+/* Actual work of processing commands is done by the threads */
 K_THREAD_DEFINE(worker_thread_id, STACKSIZE, work_handler, NULL, NULL, NULL, PRIORITY, 0, 0);
+
+/* Define kernel fifo for sending commands to worker thread */
 K_FIFO_DEFINE(work_fifo);
+
+// buffer to hold adc raeading
 int16_t buf;
 struct adc_sequence sequence = {
 	.buffer = &buf,
 	/* buffer size in bytes, not number of samples */
 	.buffer_size = sizeof(buf),
 };
+
 void main(void)
 {
 	led_setup(&led_red);
@@ -139,25 +133,19 @@ void main(void)
 		LOG_ERR("usb_enable() failed");
 		return;
 	}
-	LOG_INF("usb device enabled");
-
 	int err;
 
-	/* Configure channels individually prior to sampling. */
-	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++)
+	if (!device_is_ready(lm35.dev))
 	{
-		if (!device_is_ready(adc_channels[i].dev))
-		{
-			printk("ADC controller device not ready\n");
-			return;
-		}
+		LOG_ERR("ADC controller device not ready");
+		return;
+	}
 
-		err = adc_channel_setup_dt(&adc_channels[i]);
-		if (err < 0)
-		{
-			printk("Could not setup channel #%d (%d)\n", i, err);
-			return;
-		}
+	err = adc_channel_setup_dt(&lm35);
+	if (err < 0)
+	{
+		LOG_ERR("Could not setup lm35 (%d)", err);
+		return;
 	}
 }
 
@@ -168,15 +156,15 @@ void blink(void *p1, void *p2)
 	int sleep_ms = (int)p2;
 	if (!device_is_ready(spec->port))
 	{
-		printk("Error: %s device is not ready\n", spec->port->name);
+		LOG_ERR("Error: %s device is not ready", spec->port->name);
 		return;
 	}
 
 	ret = gpio_pin_configure_dt(spec, GPIO_OUTPUT);
 	if (ret != 0)
 	{
-		printk("Error %d: failed to configure pin %d \n",
-			   ret, spec->pin);
+		LOG_ERR("Error %d: failed to configure pin %d",
+				ret, spec->pin);
 		return;
 	}
 
@@ -186,8 +174,6 @@ void blink(void *p1, void *p2)
 		k_msleep(sleep_ms);
 	}
 }
-
-//* functions for usb_device
 
 /**
  * @brief Callback function for usb device status change
@@ -240,68 +226,6 @@ void ro_cb_usb_status(struct usb_cfg_data *cfg, enum usb_dc_status_code cb_statu
 		break;
 	}
 	LOG_INF(" ro_usb_dc_status_callback(): param=%hu, status=%s", (unsigned short)(*param), status);
-}
-
-//* functions for usb configuration
-
-// *  functions related to usb interface
-
-/**
- * @brief Callback function for runtime interface configuration
- *
- * @param head pointer to usb_description header
- * @param bInterfaceNumber interface number to be configured
- */
-void ro_usb_interface_config(struct usb_desc_header *head, uint8_t bInterfaceNumber)
-{
-	LOG_INF("ro_usb_interface_config() called for runtime configuration of interface %#x", bInterfaceNumber);
-}
-
-/**
- * @brief Handler function for handling class specific control (EP0) commands
- *
- * @param setup usb packet setup
- * @param len length of data
- * @param data pointer to data
- * @return int 0 if success, negative error no if failure
- */
-int ro_class_request_handler(struct usb_setup_packet *setup, int32_t *transfer_len, uint8_t **payload_data)
-{
-	LOG_DBG("Class request: bRequest 0x%x bmRequestType 0x%x len %d", setup->bRequest, setup->bmRequestType, *transfer_len);
-	return 0;
-}
-
-/**
- * @brief Handler function for handling vendor specific commands
- *
- * @param setup usb packet setup
- * @param len length of data
- * @param data pointer to data
- * @return int 0 if success, negative error no if failure
- */
-int ro_vendor_request_handler(struct usb_setup_packet *setup, int32_t *len, uint8_t **data)
-{
-	LOG_DBG("Vendor request: bRequest 0x%x bmRequestType 0x%x len %d", setup->bRequest, setup->bmRequestType, *len);
-	return 0;
-}
-
-/**
- * @brief The custom request handler gets a first chance at handling
- * the request before it is handed over to the 'chapter 9' request
- * handler.
- *
- * @param setup usb packet setup
- * @param transfer_len lengh of payload_data
- * @param payload_data pointer to payload_data
- * @return int 0 on success, -EINVAL if the request has not been handled by
- *	  the custom handler and instead needs to be handled by the
- *	  core USB stack. Any other error code to denote failure within
- *	  the custom handler.
- */
-int ro_custom_request_handler(struct usb_setup_packet *setup, int32_t *transfer_len, uint8_t **payload_data)
-{
-	LOG_DBG("Custom request: bRequest 0x%x bmRequestType 0x%x len %d", setup->bRequest, setup->bmRequestType, *transfer_len);
-	return -EINVAL;
 }
 
 //* functions for endpoint
@@ -360,6 +284,7 @@ void work_handler()
 			handle_led(frame->cmd, &led_builtin);
 			break;
 		case LED_YELLOW:
+			LOG_INF("Yellow led");
 			handle_led(frame->cmd, &led_yellow);
 			break;
 		case LED_RED:
@@ -405,10 +330,13 @@ void handle_led(uint8_t cmd, const struct gpio_dt_spec *p_spec)
 		gpio_pin_set_dt(p_spec, 0x00);
 		break;
 	case LED_TOGGLE:
+		LOG_INF("Toggling");
 		gpio_pin_toggle_dt(p_spec);
 		break;
 	case LED_BLINK:
-
+		gpio_pin_toggle_dt(p_spec);
+		k_msleep(500);
+		gpio_pin_toggle_dt(p_spec);
 		break;
 	default:
 		break;
@@ -419,54 +347,53 @@ void handle_lm35(frame_t *frame)
 {
 	int err, ret;
 	uint32_t read_bytes;
-	printk("ADC reading:\n");
-	for (size_t i = 0U; i < ARRAY_SIZE(adc_channels); i++)
+	int32_t val_mv;
+
+	LOG_INF("ADC reading: ");
+
+	(void)adc_sequence_init_dt(&lm35, &sequence);
+
+	err = adc_read(lm35.dev, &sequence);
+	if (err < 0)
 	{
-		int32_t val_mv;
-
-		printk("- %s, channel %d: ",
-			   adc_channels[i].dev->name,
-			   adc_channels[i].channel_id);
-
-		(void)adc_sequence_init_dt(&adc_channels[i], &sequence);
-
-		err = adc_read(adc_channels[i].dev, &sequence);
-		if (err < 0)
-		{
-			printk("Could not read (%d)\n", err);
-			continue;
-		}
-		else
-		{
-			printk("%" PRId16, buf);
-		}
-
-		/* conversion to mV may not be supported, skip if not */
-		val_mv = buf;
-		err = adc_raw_to_millivolts_dt(&adc_channels[i],
-									   &val_mv);
-		if (err < 0)
-		{
-			printk(" (value in mV not available)\n");
-		}
-		else
-		{
-			printk(" = %" PRId32 " mV\n", val_mv);
-		}
-
-		uint8_t *buff = (uint8_t *)k_malloc(sizeof(frame) + 1);
-		frame->payload_len = 1;
-		memcpy(buff, frame, sizeof(frame));
-		buff[3] = 0x76; /// temperature value
-		ret = usb_write(RO_EP_IN_ADDR, buff, 4, &read_bytes);
-		if (ret < 0)
-		{
-			LOG_ERR("usb_write() failed");
-			return;
-		}
-		LOG_INF("Wrote %d bytes\n", read_bytes);
-		k_free(buff);
+		LOG_ERR("Could not read (%d)", err);
 	}
+	else
+	{
+		LOG_INF("16 bit value %#x", buf);
+	}
+
+	/* conversion to mV may not be supported, skip if not */
+	val_mv = buf;
+	err = adc_raw_to_millivolts_dt(&lm35,
+								   &val_mv);
+	if (err < 0)
+	{
+		LOG_ERR(" (value in mV not available)");
+	}
+	else
+	{
+		LOG_INF("millivolts: %#x && %hd", val_mv, (int16_t)val_mv);
+	}
+
+	frame_ret_t * buff = (frame_ret_t *) k_malloc(sizeof(frame_ret_t));
+	buff->cmd = frame->cmd;
+	buff->peripheral_id = frame->peripheral_id;
+	buff->payload_len = 2;
+	buff->value = (uint16_t)val_mv;
+	// frame->payload_len = 2;
+	// memcpy(buff, frame, sizeof(frame));
+	// uint16_t tx_value = (int16_t)val_mv;
+	LOG_INF("Transmitted actual value: %#x, %hd", buff->value, buff->value);
+	// buff[sizeof(frame)] = tx_value; /// temperature value
+	ret = usb_write(RO_EP_IN_ADDR, buff, 5, &read_bytes);
+	if (ret < 0)
+	{
+		LOG_ERR("usb_write() failed");
+		return;
+	}
+	LOG_INF("Wrote %d bytes\n", read_bytes);
+	k_free(buff);
 }
 
 void led_setup(const struct gpio_dt_spec *spec)
