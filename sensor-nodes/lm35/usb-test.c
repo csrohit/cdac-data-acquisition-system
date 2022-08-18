@@ -4,11 +4,11 @@
 #include <fcntl.h>
 #include <stdlib.h>
 
-
 int main()
 {
     int choice;
     frame_t frame;
+    frame_ret_t *buff;
     int ret;
     int fd = open("/dev/node0", O_RDWR);
     if (fd < 0)
@@ -53,7 +53,6 @@ int main()
             }
             break;
         case 3:
-            printf("Temperature: 34\n");
             frame.cmd = LM35_READ;
             frame.peripheral_id = LM35;
             frame.payload_len = 0U;
@@ -64,11 +63,16 @@ int main()
                 close(fd);
                 _exit(EXIT_FAILURE);
             }
-            char buff[4];
+            buff = (frame_ret_t *)malloc(sizeof(frame_ret_t));
             ret = read(fd, buff, sizeof(buff));
             printf("Read %d bytes\n", ret);
-            printf("Peripheral id: %#x, cmd: %#x, len: %#x\n", buff[0], buff[1], buff[2]);
-            printf("Temperature data: %#x\n", buff[3]);
+            printf("Peripheral id: %#x, cmd: %#x, len: %#x, value: %#x\n", buff->peripheral_id, buff->cmd, buff->payload_len, buff->value);
+            // printf("Byte stream: %#x %#x %#x %#x %#x", (uint8_t)buff[0], (uint8_t)buff[1], (uint8_t)buff[2], (uint8_t)buff[3], (uint8_t)buff[4]);
+
+            // int16_t *val = (int16_t *)(buff + 3);
+            printf("Temperature data: %#x\n", buff->value);
+            free(buff);
+            // printf("Temperature data: %#x\n",  (int16_t)buff[3]);
             break;
         default:
             printf("Invalid choice\n");

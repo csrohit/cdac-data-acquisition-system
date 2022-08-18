@@ -18,7 +18,8 @@
 		led_c13: led_c13 {
 			gpios = <&gpioc 0xd GPIO_ACTIVE_HIGH>;
 			label = "Rohit LED Pin C13";
-			};        led_c14: led_c14 {
+		};
+		led_c14: led_c14 {
 			gpios = <&gpioc 0xe GPIO_ACTIVE_HIGH>;
 			label = "Rohit LED Pin C14";
 		};
