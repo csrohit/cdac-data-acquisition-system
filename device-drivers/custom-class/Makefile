@@ -5,10 +5,10 @@ all:
 	make -C /lib/modules/`uname -r`/build M=`pwd` modules
 
 insert:
-	insmod usb_rohit.ko
+	sudo insmod usb_rohit.ko
 
 remove:
-	rmmod usb_rohit.ko
+	sudo rmmod usb_rohit.ko
 
 clean:
 	make -C /lib/modules/`uname -r`/build M=`pwd` clean
