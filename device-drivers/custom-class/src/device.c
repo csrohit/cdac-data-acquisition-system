@@ -2,7 +2,6 @@
 #include <linux/uaccess.h>
 #include "usb_custom.h"
 
-
 /**
  * @brief Routine to be called when read() system call is invoked
  *
@@ -63,47 +62,43 @@ struct usb_class_driver ro_class = {
 
 uint8_t maxPacketSize = 0x40;
 
-
-
 static ssize_t ro_file_read(struct file *p_file, char __user *p_buff, size_t max_len, loff_t *_offset)
 {
     static ro_usb_dev_t *dev;
     static int pipe, ret, nbytes;
     static size_t bytes_to_read;
-    static void *k_buff;
-    printk(KERN_INFO "%s: read called\n", THIS_MODULE->name);
+    static char *k_buff;
+    pr_info("%s: read called\n", THIS_MODULE->name);
     dev = p_file->private_data;
     if (IS_ERR(dev))
     {
-        printk(KERN_ERR "%s: device is NULL in file pointer\n", THIS_MODULE->name);
+        pr_err("%s: device is NULL in file pointer\n", THIS_MODULE->name);
         return -ENODEV;
     }
 
     if (!dev->is_connected)
     {
-        printk(KERN_ERR "%s: device is disconnected\n", THIS_MODULE->name);
+        pr_err("%s: device is disconnected\n", THIS_MODULE->name);
         return -ENODEV;
     }
 
     pipe = usb_rcvbulkpipe(dev->udev, BULK_EP_IN);
     bytes_to_read = MIN(max_len, maxPacketSize);
 
-    k_buff = kmalloc(bytes_to_read, GFP_KERNEL);
+    k_buff = (uint8_t *)kmalloc(bytes_to_read, GFP_KERNEL);
     pr_info("%s: Reading %ld bytes from usb\n", THIS_MODULE->name, bytes_to_read);
-    pr_info("%s: Allocated %ld bytes for buffer\n", THIS_MODULE->name, bytes_to_read);
 
     // write data to usb device
     ret = usb_bulk_msg(dev->udev, pipe, k_buff, bytes_to_read, &nbytes, 10000);
     if (ret < 0)
     {
-        printk(KERN_ERR "%s: Bulk message returned %d\n", THIS_MODULE->name, ret);
+        pr_err("%s: Bulk message returned %d\n", THIS_MODULE->name, ret);
         kfree(k_buff);
         return -EFAULT;
     }
-
     pr_info("%s: Read %d bytes from usb\n", THIS_MODULE->name, nbytes);
 
-    if (copy_to_user(p_buff, k_buff, 4))
+    if (copy_to_user(p_buff, k_buff, nbytes))
     {
         pr_err("%s: Error while copying data to user space\n", THIS_MODULE->name);
         kfree(k_buff);

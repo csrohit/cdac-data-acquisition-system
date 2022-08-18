@@ -64,18 +64,7 @@ static __init int ro_init(void)
 
 static __exit void ro_exit(void)
 {
-    ro_usb_dev_t *temp, *trav;
     printk(KERN_INFO "%s: exit module\n", THIS_MODULE->name);
-
-    /* Free linked list */
-    // list_for_each_entry_safe(trav, temp, &list_head.list, list)
-    // {
-    //     pr_info("%s: Deleting %s\n", THIS_MODULE->name, trav->udev->devpath);
-    //     list_del(&trav->list);
-    //     // list_del_init(trav);
-    //     // kfree(trav);
-    //     trav = NULL;
-    // }
 
     /* deregister this driver with the USB subsystem */
     usb_deregister(&ro_driver);
@@ -180,16 +169,13 @@ void ro_dev_release(struct kref *kref)
     ro_dev = container_of(kref, ro_usb_dev_t, kref);
     printk(KERN_INFO "%s: ro_dev_release called\n", THIS_MODULE->name);
 
-    pr_info("%s: Decrementing count on device\n", THIS_MODULE->name);
     // decrement usage count of usb device
     usb_put_dev(ro_dev->udev);
 
-    pr_info("%s: Decrementing count on interface\n", THIS_MODULE->name);
     // decrement usage count of interface
     usb_put_intf(ro_dev->interface);
 
     // free memory allocated to device
-    pr_info("%s: releasing resources for device\n", THIS_MODULE->name);
     kfree(ro_dev);
 }
 

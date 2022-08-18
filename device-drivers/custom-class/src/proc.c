@@ -40,22 +40,34 @@ struct proc_dir_entry *ent = NULL;
 
 static ssize_t proc_read(struct file *p_file, char __user *p_buff, size_t max_len, loff_t *_offset)
 {
-    unsigned long ret;
-    ro_usb_dev_t *trav;
+    static unsigned long ret;
+    static ro_usb_dev_t *trav;
+    static char ser[64];
+    static int buff_len=0;
+    static char buff[100];
+
+
     pr_info("%s: Proc read called (%ld)\n", THIS_MODULE->name, max_len);
     if (*_offset == 0)
     {
+        buff_len = 0;
+        memset(buff,0,sizeof(buff));
         list_for_each_entry(trav, &list_head.list, list)
         {
-            printk("%s:  %s\n", THIS_MODULE->name, trav->udev->devpath);
+            ret = usb_string(trav->udev, 3,ser, sizeof(ser));
+            if(ret < 0){
+                return ret;
+            }
+            pr_info("%s: Read device sn: %s",THIS_MODULE->name, ser);
+
+            ret = sprintf(buff + strlen(buff), "%s node%d\n", ser, trav->interface->minor);
+            buff_len += ret;
         }
 
-        char *data = "THis is my data";
-        ssize_t len = strlen(data);
-        *_offset = len;
-        ret = copy_to_user(p_buff, data, MIN(len, max_len));
+        *_offset += buff_len;
+        ret = copy_to_user(p_buff, buff, MIN(buff_len, max_len));
         pr_info("%s: copied data to user space\n", THIS_MODULE->name);
-        return MIN(len, max_len);
+        return MIN(buff_len, max_len);
     }
     return 0;
 }
