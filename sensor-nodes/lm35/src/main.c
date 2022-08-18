@@ -107,7 +107,7 @@ const struct gpio_dt_spec led_green = GPIO_DT_SPEC_GET(DT_ALIAS(led_green), gpio
 K_THREAD_DEFINE(blink0_id, STACKSIZE, blink, &led_builtin, 1000, NULL, PRIORITY, 0, 0);
 
 /* Actual work of processing commands is done by the threads */
-K_THREAD_DEFINE(worker_thread_id, STACKSIZE, work_handler, NULL, NULL, NULL, PRIORITY, 0, 0);
+K_THREAD_DEFINE(worker_thread_id, STACKSIZE, work_handler, NULL, NULL, NULL, 1, 0, 0);
 
 /* Define kernel fifo for sending commands to worker thread */
 K_FIFO_DEFINE(work_fifo);
