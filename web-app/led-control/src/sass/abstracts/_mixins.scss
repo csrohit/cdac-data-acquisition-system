@@ -37,8 +37,13 @@
   padding: $padding;
 }
 
-@mixin grid($columns, $column-gap) {
+@mixin grid($columns, $column-gap: 1rem, $row-gap:1rem) {
   display: grid;
   grid-template-columns: $columns;
   column-gap: $column-gap;
+  row-gap: $row-gap;
+}
+
+@mixin grid-row {
+  grid-column: 1/-1;
 }
