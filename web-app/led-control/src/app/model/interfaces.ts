@@ -1,7 +1,7 @@
 export interface IIdLabelDescription{
-    id: number;
-    label: string;
-    description: string
+    id?: number;
+    label?: string;
+    description?: string
 }
 
 
@@ -17,12 +17,12 @@ export interface INodeType extends IIdLabelDescription{
 
 
 export interface INode extends IIdLabelDescription{
-    type: INodeType;
-    mqTopic: string;
+    type?: INodeType;
+    mqTopic?: string;
 }
 
 export interface ICommand extends INameLabelDescription {
-    hwValue: number;
+    hwValue?: number;
 }
 
 

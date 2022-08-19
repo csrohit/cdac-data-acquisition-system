@@ -1,1 +1,52 @@
-<p>node-add works!</p>
+<form [formGroup]="nodeForm">
+    <h2>Create new Node</h2>
+
+    <mat-form-field appearance="standard" class="form-field" color="accent">
+        <mat-label>Label</mat-label>
+        <input type="text" matInput formControlName="label">
+        <mat-icon disabled matSuffix
+            [color]="nodeForm.get('label')?.touched && nodeForm.get('label')?.invalid ? 'warn': 'accent'">description
+        </mat-icon>
+        <mat-hint>Display name of node</mat-hint>
+        <mat-error *ngIf="nodeForm.get('label')?.invalid && nodeForm.get('label')?.errors">Label is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="standard" class="form-field" color="accent">
+        <mat-label>Description</mat-label>
+        <input type="text" matInput formControlName="description">
+        <mat-icon disabled matSuffix
+            [color]="nodeForm.get('description')?.touched && nodeForm.get('description')?.invalid ? 'warn': 'accent'">developer_board
+        </mat-icon>
+        <mat-hint>Short description of node</mat-hint>
+        <mat-error *ngIf="nodeForm.get('description')?.invalid && nodeForm.get('description')?.errors">Description is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="standard" class="form-field" color="accent">
+        <mat-label topic>MQTT topic</mat-label>
+        <input type="text" matInput formControlName="mqTopic">
+        <mat-icon disabled matSuffix
+            [color]="nodeForm.get('mqTopic')?.touched && nodeForm.get('mqTopic')?.invalid ? 'warn': 'accent'">import_export
+        </mat-icon>
+        <mat-hint>MQTT topic for communication</mat-hint>
+        <mat-error *ngIf="nodeForm.get('mqTopic')?.invalid && nodeForm.get('mqTopic')?.errors">MQTT topic is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="standard" class="form-field">
+        <mat-label>Node type</mat-label>
+        <mat-select formControlName="type">
+          <mat-option>--</mat-option>
+          <mat-option *ngFor="let nodeType of nodeTypes$ | async" [value]="nodeType.id">
+            {{nodeType.label}}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="nodeForm.get('type')?.hasError('required')">Please select a node type</mat-error>
+        <mat-hint>Type of node</mat-hint>
+      </mat-form-field>
+
+    <div class="form-footer-buttons">
+        <button [disabled]="nodeForm.invalid" mat-raised-button color="accent" (click)="onSubmitClick()">Submit</button>
+        <button mat-stroked-button color="accent" (click)="onCancelClick()">Cancel</button>
+    </div>
+
+
+</form>
