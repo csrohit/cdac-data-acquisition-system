@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { defineInjectable, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { INode, IDevice, ICommand } from '../model/interfaces';
+import { IDevice, ICommand } from '../model/interfaces';
 
 @Injectable({
   providedIn: 'root'
@@ -30,6 +30,24 @@ export class DeviceService {
    */
   findAll(): Observable<IDevice[]>{
     return this.http.get<IDevice[]>(this.BASE);
+  }
+
+  /**
+   * fetch device details
+   * @param id Id of device
+   * @returns device details
+   */
+  findById(id: IDevice['id']): Observable<IDevice>{
+    return this.http.get<IDevice>(`${this.BASE}/${id}`);
+  }
+
+  /**
+   * Create device details
+   * @param device device details
+   * @returns saved device
+   */
+  save(device: IDevice): Observable<IDevice>{
+    return this.http.post<IDevice>(this.BASE, device);
   }
 
   /**

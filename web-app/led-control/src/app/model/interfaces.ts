@@ -27,13 +27,13 @@ export interface ICommand extends INameLabelDescription {
 
 
 export interface IDeviceType extends IIdLabelDescription{
-    type: IDeviceType;
-    cmdList: Array<ICommand>;
-    retCmdList: Array<ICommand>;
+    type?: IDeviceType;
+    cmdList?: Array<ICommand>;
+    retCmdList?: Array<ICommand>;
 }
 
 export interface IDevice extends IIdLabelDescription{
-    type: IDeviceType;
-    node: INode;
-    hwId: number;
+    type?: IDeviceType;
+    node?: INode;
+    hwId?: number;
 }

@@ -32,7 +32,7 @@ export class NodeListComponent implements OnInit {
    * @param id id clicked node
    */
   onViewDevicesClick(id: INode['id']): void{
-    this.router.navigate(['node', id, 'devices'])
+    this.router.navigate(['node', id, 'device'])
   }
 
   /**

@@ -1,5 +1,5 @@
 <form [formGroup]="nodeForm">
-    <h2>Create new Node</h2>
+    <h2>{{selectedNodeId? 'Update ': 'Create '}}Node</h2>
 
     <mat-form-field appearance="standard" class="form-field" color="accent">
         <mat-label>Label</mat-label>

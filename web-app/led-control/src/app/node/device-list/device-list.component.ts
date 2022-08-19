@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { first, Observable } from 'rxjs';
-import { ICommand, IDevice } from 'src/app/model/interfaces';
+import { ICommand, IDevice, INode } from 'src/app/model/interfaces';
 import { DeviceService } from 'src/app/service/device.service';
 import { NodeService } from 'src/app/service/node.service';
 
@@ -14,7 +14,8 @@ export class DeviceListComponent implements OnInit {
 
   devices$!: Observable<IDevice[]>;
   areCommandsVisible = false;
-  selectedDeviceId: IDevice['id'] = -1;
+  selectedDeviceId: IDevice['id'] = undefined;
+  selectedNodeId: INode['id'] = undefined
 
   constructor(
     private nodeService: NodeService,
@@ -26,9 +27,14 @@ export class DeviceListComponent implements OnInit {
   ngOnInit(): void {
 
     this.activatedRoute.params.subscribe(params => {
-      if (params['id']) {
+      this.selectedNodeId = params['nodeId'];
+      if (params['nodeId']) {
         this.devices$ = this.nodeService
-          .findDevices(params['id']);
+          .findDevices(params['nodeId']);
+      }else{
+
+        this.devices$ = this.deviceService
+          .findAll();
       }
     })
   }
@@ -60,7 +66,11 @@ export class DeviceListComponent implements OnInit {
    * @param id id of device
    */
   onDeviceEditClick(id: IDevice['id']): void {
-    this.router.navigate(['device', id, 'edit']);
+    if (this.selectedNodeId) {
+      this.router.navigate(['node', this.selectedNodeId, 'device', id, 'edit']);
+    } else {
+      this.router.navigate(['device', id, 'edit'])
+    }
   }
 
   /**

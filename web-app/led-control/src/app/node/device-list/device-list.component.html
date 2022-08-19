@@ -4,7 +4,7 @@
     <div *ngFor="let device of devices$ | async" class="device">
         <h4>{{device.label}}</h4>
         <div class="description"><mat-icon class="material-icons-outlined">description</mat-icon> <span>{{device.description}}</span></div>
-        <div class="caption"><mat-icon class="material-icons-outlined">developer_board</mat-icon> <span>{{device.type.label}}</span></div>
+        <div class="caption"><mat-icon class="material-icons-outlined">developer_board</mat-icon> <span>{{device.type?.label}}</span></div>
         <div class="action-buttons">
             <button color="primary" mat-button (click)="onDeviceEditClick(device.id)">Edit</button>
             <button color="warn" mat-button (click)="onDeviceDeleteClick(device.id)">Delete</button>
@@ -12,7 +12,7 @@
     </div>
 
         <div *ngIf="selectedDeviceId === device.id" class="commands">
-            <div *ngFor="let cmd of device.type.cmdList" class="command">
+            <div *ngFor="let cmd of device.type?.cmdList" class="command">
                 <span>{{cmd.label}} <button mat-button color="primary" (click)="onRunCommandClick(device.id, cmd.name)">run</button></span>
             </div>
         </div>

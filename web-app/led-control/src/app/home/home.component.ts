@@ -19,8 +19,15 @@ export class HomeComponent implements OnInit {
   /**
    * Navigates to node list component
    */
-  navigateToNode(): void{
+  navigateToNode(): void {
     this.router.navigate(['node']);
+  }
+
+  /**
+  * Navigates to node list component
+  */
+  navigateToDevice(): void {
+    this.router.navigate(['device']);
   }
 
 }

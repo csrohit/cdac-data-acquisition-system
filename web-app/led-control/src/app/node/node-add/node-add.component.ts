@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { first, Observable, share, shareReplay } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { first, Observable, of, share, shareReplay, switchMap } from 'rxjs';
 import { INode, INodeType } from 'src/app/model/interfaces';
 import { NodeTypeService } from 'src/app/service/node-type.service';
 import { NodeService } from 'src/app/service/node.service';
@@ -16,10 +16,11 @@ export class NodeAddComponent implements OnInit {
   nodeForm: FormGroup;
   node: INode
   nodeTypes$: Observable<INodeType[]>;
+  selectedNodeId: INode['id'] = undefined;
 
 
   constructor(
-    private fb: FormBuilder,
+    private route: ActivatedRoute,
     private nodeTypeService: NodeTypeService,
     private nodeService: NodeService,
     private router: Router
@@ -43,6 +44,25 @@ export class NodeAddComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.route
+    .params
+    .pipe(
+      switchMap(params => {
+        if(params && params['nodeId']){
+          this.selectedNodeId = params['nodeId'];
+          return this.nodeService.findById(params['nodeId'])
+        }
+        return of(null);
+      })
+    )
+    .subscribe(res =>{
+      if(res){
+        this.nodeForm.patchValue({
+          ...res,
+          type: res.type?.id
+        })
+      }
+    })
   }
 
 
@@ -56,7 +76,11 @@ export class NodeAddComponent implements OnInit {
         id: this.nodeForm.get('type')?.value
       }
     }
-    this.nodeService.save(this.node).pipe(first()).subscribe(() => this.router.navigate(['node']));
+    if(this.selectedNodeId){
+      this.nodeService.update(this.selectedNodeId,this.node).pipe(first()).subscribe(() => this.router.navigate(['node']));
+    }else{
+      this.nodeService.save(this.node).pipe(first()).subscribe(() => this.router.navigate(['node']));
+    }
   }
 
 
