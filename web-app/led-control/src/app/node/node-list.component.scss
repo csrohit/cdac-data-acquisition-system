@@ -11,3 +11,10 @@
       @include card($padding: 1rem);
     }
 }
+
+
+.btn-add{
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+}

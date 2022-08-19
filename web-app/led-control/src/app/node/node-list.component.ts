@@ -6,10 +6,10 @@ import { NodeService } from '../service/node.service';
 
 @Component({
   selector: 'app-node',
-  templateUrl: './node.component.html',
-  styleUrls: ['./node.component.scss']
+  templateUrl: './node-list.component.html',
+  styleUrls: ['./node-list.component.scss']
 })
-export class NodeComponent implements OnInit {
+export class NodeListComponent implements OnInit {
 
   nodes$: Observable<INode[]>;
 
@@ -29,5 +29,8 @@ export class NodeComponent implements OnInit {
     this.router.navigate(['node', id, 'devices'])
   }
 
+  onAddNodeClick(): void{
+    this.router.navigate(['node', 'add'])
+  }
 
 }
