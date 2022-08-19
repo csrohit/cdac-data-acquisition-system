@@ -9,10 +9,12 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AuthInterceptor } from './service/auth.interceptor';
 
 import { MatButtonModule } from '@angular/material/button';
+import { HomeComponent } from './home/home.component';
 
 @NgModule({
   declarations: [
     AppComponent,
+    HomeComponent,
   ],
   imports: [
     BrowserModule,
