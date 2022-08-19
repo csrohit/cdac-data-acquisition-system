@@ -14,10 +14,19 @@ export class NodeTypeService {
     private http: HttpClient
   ) { }
 
-  findAll(): Observable<Array<INodeType>>{
+  /**
+   * Fetch all node types
+   * @returns array of node types
+   */
+  findAll(): Observable<INodeType[]>{
     return this.http.get<INodeType[]>(this.BASE);
   }
 
+  /**
+   * Fetch node type by id
+   * @param id id of node type
+   * @returns Observalble of node type
+   */
   findById(id: INodeType['id']): Observable<INodeType>{
     return this.http.get<INodeType>(`${this.BASE}/${id}`);
   }
