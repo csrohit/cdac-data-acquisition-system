@@ -63,11 +63,27 @@ public class DeviceController {
         try{
             responseEntity = new ResponseEntity(service.update(id, device), HttpStatus.OK);
         }catch (NotFoundException e){
-            LOG.error("Couldn't find node", e);
-            responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Invalid node id"));
+            LOG.error("Couldn't find device", e);
+            responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Invalid device id"));
         }catch (Exception e){
-            LOG.error("Couldn't find node", e);
-            responseEntity = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("Couldn't find node"));
+            LOG.error("Couldn't find device", e);
+            responseEntity = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("Couldn't find device"));
+        }
+        return responseEntity;
+    }
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<Node> delete(@PathVariable(value = "id") Integer id){
+        ResponseEntity responseEntity = null;
+        try{
+            service.delete(id);
+            responseEntity = ResponseEntity.ok().build();
+        }catch (NotFoundException e){
+            LOG.error("Couldn't find device", e);
+            responseEntity = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse("Invalid device id"));
+        }catch (Exception e){
+            LOG.error("Couldn't find device", e);
+            responseEntity = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorResponse("Couldn't find device"));
         }
         return responseEntity;
     }
@@ -106,10 +122,6 @@ public class DeviceController {
             LOG.error("Something went wrong", e);
             return new ResponseEntity(new ErrorResponse(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-
-
-
         return ResponseEntity.ok().body(message);
 
     }

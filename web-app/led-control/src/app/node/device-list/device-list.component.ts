@@ -14,6 +14,7 @@ export class DeviceListComponent implements OnInit {
 
   devices$!: Observable<IDevice[]>;
   areCommandsVisible = false;
+  selectedDeviceId: IDevice['id'] = -1;
 
   constructor(
     private nodeService: NodeService,
@@ -35,19 +36,41 @@ export class DeviceListComponent implements OnInit {
   /**
    * Navigates to node-list component 
    */
-  onGoToNodeClick(): void{
+  onGoToNodeClick(): void {
     this.router.navigate(['node']);
   }
 
   /**
    * Toggle command list
    */
-  onViewCommandsClick(): void{
-    this.areCommandsVisible = !this.areCommandsVisible;
+  onViewCommandsClick(id: IDevice['id']): void {
+    if(this.selectedDeviceId){
+      this.selectedDeviceId = undefined;
+    }else{
+      this.selectedDeviceId = id;
+    }
   }
 
-  onRunCommandClick(id: IDevice['id'], cmdName: ICommand['name']): void{
-    this.deviceService.runCommand(id, cmdName).pipe(first()).subscribe(); 
+  onRunCommandClick(id: IDevice['id'], cmdName: ICommand['name']): void {
+    this.deviceService.runCommand(id, cmdName).pipe(first()).subscribe();
+  }
+
+  /**
+   * Event handler for edit device button click
+   * @param id id of device
+   */
+  onDeviceEditClick(id: IDevice['id']): void {
+    this.router.navigate(['device', id, 'edit']);
+  }
+
+  /**
+   * 
+   * @param id id of device
+   */
+  onDeviceDeleteClick(id: IDevice['id']): void {
+    this.deviceService.delete(id).pipe(first()).subscribe(() => {
+      this.ngOnInit();
+    })
   }
 
 }

@@ -21,6 +21,7 @@ public class Device extends IdLabelDescription{
 
 	public Device() {
 		super();
+		this.hwId = (byte) 0xff;
 	}
 
 	@NonNull

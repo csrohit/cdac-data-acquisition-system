@@ -33,14 +33,46 @@ public class DeviceService {
         return repository.findById(id);
     }
 
+    /**
+     * UPdate device details
+     * @param id id of device
+     * @param device devices details to be updated
+     * @return updated device
+     * @throws NotFoundException if device does not exist
+     */
     public Device update(Integer id, Device device) throws NotFoundException {
         Optional<Device> optionalDevice = repository.findById(id);
         if(optionalDevice.isEmpty()){
-            throw new NotFoundException("Node doesn't exist");
+            throw new NotFoundException("Device doesn't exist");
         }
         Device existingDevice = optionalDevice.get();
-        existingDevice.setHwId(device.getHwId());
+        System.out.println(device.getHwId());
+        if(device.getHwId() != 0xff)
+            existingDevice.setHwId(device.getHwId());
+
+        if(!device.getLabel().isEmpty())
+            existingDevice.setLabel(device.getLabel());
+
+        if(!device.getDescription().isEmpty())
+            existingDevice.setDescription(device.getDescription());
+
+        if(device.getType() != null && device.getType().getId() != null)
+            existingDevice.setType(device.getType());
+
         return repository.save(existingDevice);
+    }
+
+    /**
+     * Delete device
+     * @param id id of device
+     * @throws NotFoundException if device does not exist
+     */
+    public void delete(Integer id) throws NotFoundException {
+        Optional<Device> optionalDevice = repository.findById(id);
+        if(optionalDevice.isEmpty()){
+            throw new NotFoundException("Device doesn't exist");
+        }
+        this.repository.deleteById(id);
     }
 
 }

@@ -55,13 +55,44 @@ public class NodeService {
         return node.getDevices();
     }
 
+    /**
+     * Update node details
+     * @param id id of node
+     * @param node updated node details
+     * @return updated node
+     * @throws NotFoundException if node does not exist
+     */
     public Node update(Integer id, Node node) throws NotFoundException {
         Optional<Node> optionalNode = repository.findById(id);
         if(optionalNode.isEmpty()){
             throw new NotFoundException("Node doesn't exist");
         }
         Node existingNode = optionalNode.get();
-        existingNode.setMqTopic(node.getMqTopic());
+        if(!node.getMqTopic().isEmpty())
+            existingNode.setMqTopic(node.getMqTopic());
+
+        if(!node.getLabel().isEmpty())
+            existingNode.setLabel(node.getLabel());
+
+        if(!node.getDescription().isEmpty())
+            existingNode.setDescription(node.getDescription());
+
+        if(node.getType() != null && node.getType().getId() != null)
+            existingNode.setType(node.getType());
+
         return repository.save(existingNode);
+    }
+
+    /**
+     * Delete node
+     * @param id id of node
+     * @throws NotFoundException if node does not exist
+     */
+    public void delete(Integer id) throws NotFoundException {
+        Optional<Node> optionalNode = repository.findById(id);
+        if(optionalNode.isEmpty()){
+            throw new NotFoundException("Node doesn't exist");
+        }
+        repository.delete(optionalNode.get());
     }
 }
